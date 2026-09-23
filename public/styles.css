@@ -1,0 +1,359 @@
+/* ==========================================================================
+   KEV PROCESS SpA - Sistema de Presupuestos y Costeo
+   styles.css - Estilos corporativos y de alta densidad para ingeniería
+   ========================================================================== */
+
+:root {
+  --primary: #0f2744;
+  --primary-light: #1e3a5f;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+  --border-dark: #94a3b8;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --excel-header-bg: #1e3a5f;
+  --excel-header-text: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header Corporativo */
+.header-bar {
+  background: linear-gradient(135deg, #0b1d33 0%, #173356 100%);
+  color: white;
+  padding: 0.85rem 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo-box {
+  background: #2563eb;
+  color: white;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+}
+
+/* Modos Selector (Cuestionario vs Desarrollo) */
+.mode-toggle-container {
+  display: flex;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mode-btn {
+  padding: 0.45rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mode-btn.active {
+  background: white;
+  color: #0f2744;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Acciones principales */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-success { background: #059669; color: white; }
+.btn-success:hover { background: #047857; }
+.btn-secondary { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+.btn-secondary:hover { background: #e2e8f0; }
+.btn-dark { background: #0f172a; color: white; }
+.btn-dark:hover { background: #1e293b; }
+
+/* Contenedor Principal */
+.app-container {
+  max-width: 1550px;
+  margin: 1.25rem auto;
+  padding: 0 1rem;
+}
+
+/* Tarjeta Resumen Flotante / Lateral */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f2744;
+}
+
+/* Stepper en Modo Cuestionario */
+.stepper-nav {
+  display: flex;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.step-item {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.85rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.step-item.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background: #f8faff;
+}
+
+.step-item.completed {
+  color: #059669;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.step-item.active .step-number {
+  background: #2563eb;
+  color: white;
+}
+
+.step-item.completed .step-number {
+  background: #059669;
+  color: white;
+}
+
+/* Formularios de Paso */
+.step-pane {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* Modo Desarrollo (Pestañas Multitab de Excel) */
+.excel-tabs {
+  display: flex;
+  background: #e2e8f0;
+  padding: 4px 6px 0 6px;
+  border-radius: 8px 8px 0 0;
+  overflow-x: auto;
+  gap: 2px;
+  border-bottom: 2px solid #0f2744;
+}
+
+.excel-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #cbd5e1;
+  color: #334155;
+  border-radius: 6px 6px 0 0;
+  white-space: nowrap;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.excel-tab:hover {
+  background: #e2e8f0;
+}
+
+.excel-tab.active {
+  background: #0f2744;
+  color: white;
+}
+
+/* Tablas Matriciales Tipo Excel */
+.excel-table-container {
+  background: white;
+  border: 1px solid var(--border);
+  border-top: none;
+  overflow-x: auto;
+  padding: 1rem;
+  min-height: 480px;
+}
+
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.excel-table th {
+  background-color: var(--excel-header-bg);
+  color: var(--excel-header-text);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  border: 1px solid #334e68;
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+}
+
+.excel-table td {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border);
+  color: #1e293b;
+}
+
+.excel-table tr:hover td {
+  background-color: #f1f5f9;
+}
+
+.excel-table input[type="text"],
+.excel-table input[type="number"],
+.excel-table select {
+  width: 100%;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fdfdfd;
+}
+
+.excel-table input:focus,
+.excel-table select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+
+.num-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.total-row td {
+  font-weight: 800;
+  background-color: #f8fafc;
+  border-top: 2px solid #0f2744;
+  border-bottom: 2px solid #0f2744;
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 950px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+}

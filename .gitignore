@@ -1,0 +1,17 @@
+# Logs y temporales
+node_modules/
+*.log
+npm-debug.log*
+
+# Temporales de Microsoft Office
+~$*.xlsx
+~$*.docx
+*.tmp
+
+# Archivos de entorno y credenciales
+.env
+.env.local
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db

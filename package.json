@@ -1,0 +1,21 @@
+{
+  "name": "kev-costeo-presupuesto",
+  "version": "1.0.0",
+  "description": "Sistema Web de Presupuestos y Costeo de Proyectos de Ingeniería - KEV Process SpA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "presupuesto",
+    "costeo",
+    "ingenieria",
+    "siemens",
+    "kev-process",
+    "xlsx",
+    "docx"
+  ],
+  "author": "KEV Process SpA",
+  "license": "Proprietary"
+}

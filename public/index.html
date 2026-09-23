@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEV PROCESS - Sistema de Presupuestos y Costeo de Ingeniería</title>
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Tailwind CSS CDN para layout ágil -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kev: {
+              50: '#f0f4f8',
+              100: '#d9e2ec',
+              500: '#1b365d',
+              700: '#0f2744',
+              800: '#0a192f',
+              blue: '#2563eb'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Bibliotecas locales para funcionamiento 100% offline y en servidor -->
+  <script src="lib/lucide.min.js"></script>
+  <script src="lib/exceljs.min.js"></script>
+  <script src="lib/docx.umd.js"></script>
+  <script src="lib/FileSaver.min.js"></script>
+
+  <!-- Fallback CDN si se abre sin carpeta lib -->
+  <script>
+    if (!window.lucide) document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+    if (!window.ExcelJS) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"><\/script>');
+    if (!window.docx) document.write('<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"><\/script>');
+    if (!window.saveAs) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"><\/script>');
+  </script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <header class="header-bar">
+    <div class="brand-badge">
+      <div class="brand-logo-box">KEV</div>
+      <div>
+        <h1 class="text-base font-bold tracking-wide">KEV PROCESS SpA</h1>
+        <p class="text-xs text-slate-300">Presupuesto & Costeo de Proyectos de Ingeniería</p>
+      </div>
+    </div>
+
+    <!-- SELECTOR DE MODO -->
+    <div class="mode-toggle-container">
+      <button id="btnModoCuestionario" class="mode-btn active" onclick="app.setModo('cuestionario')">
+        <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+        Modo Cuestionario
+      </button>
+      <button id="btnModoDesarrollo" class="mode-btn" onclick="app.setModo('desarrollo')">
+        <i data-lucide="table" class="w-4 h-4"></i>
+        Modo Desarrollo (Planilla)
+      </button>
+    </div>
+
+    <!-- ACCIONES Y EXPORTACIÓN -->
+    <div class="flex items-center gap-2">
+      <!-- Selector de Presets -->
+      <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="text-xs py-1.5 px-2.5 rounded bg-slate-800 text-white border border-slate-600 focus:outline-none focus:border-blue-400">
+        <option value="101-2026">⚡ Preset: 101-2026 (Migración Sirius a Sinamics G120)</option>
+        <option value="061-2026">⚡ Preset: 061-2026 (Servicio Asistencia Terreno / PCS7)</option>
+        <option value="037-2026">⚡ Preset: 037-2026 (Suministro Hardware IPC)</option>
+        <option value="blanco">📄 Proyecto Nuevo en Blanco</option>
+      </select>
+
+      <!-- Botón Exportar Excel -->
+      <button onclick="app.exportarXLSX()" class="btn btn-success text-xs py-1.5 px-3" title="Genera planilla XLSX con formato y fórmulas exactas de 9 hojas">
+        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+        Exportar XLSX
+      </button>
+
+      <!-- Botón Exportar Word -->
+      <button onclick="app.exportarDOCX()" class="btn btn-primary text-xs py-1.5 px-3" title="Genera propuesta técnico-comercial en Word con bases legales y garantías">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        Generar Word (.docx)
+      </button>
+
+      <!-- Botón Previsualizar Propuesta -->
+      <button onclick="app.abrirModalPrevisualizacion()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Ver texto de la propuesta">
+        <i data-lucide="eye" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- BARRA RESUMEN KPI EN TIEMPO REAL -->
+  <section class="bg-white border-b border-slate-200 px-6 py-3 shadow-sm">
+    <div class="max-w-[1550px] mx-auto grid grid-cols-2 md:grid-cols-6 gap-4 items-center text-xs">
+      <div>
+        <span class="text-slate-500 font-semibold block">CLIENTE & CORRELATIVO</span>
+        <span id="kpiClienteCorrelativo" class="font-bold text-slate-800 text-sm truncate block">AZA | 101-2026</span>
+      </div>
+      <div>
+        <span class="text-slate-500 font-semibold block">COSTO TOTAL PROYECTO</span>
+        <span id="kpiCostoTotal" class="font-extrabold text-slate-700 text-sm">$ 28.145.926</span>
+      </div>
+      <div>
+        <span class="text-slate-500 font-semibold block">MARGEN CONSOLIDADO</span>
+        <span id="kpiMargenConsolidado" class="font-extrabold text-blue-600 text-sm">36,0%</span>
+      </div>
+      <div>
+        <span class="text-slate-500 font-semibold block">PRECIO VENTA CLP</span>
+        <span id="kpiPrecioCLP" class="font-extrabold text-emerald-600 text-base">$ 43.665.609</span>
+      </div>
+      <div>
+        <span class="text-slate-500 font-semibold block">PRECIO VENTA USD</span>
+        <span id="kpiPrecioUSD" class="font-extrabold text-emerald-700 text-base">$ 45.964 USD</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-full">
+          <label class="text-slate-400 font-semibold block">T/C DÓLAR (CLP)</label>
+          <input type="number" id="inputDolar" value="950" onchange="app.actualizarParametro('dolar', this.value)" class="w-20 px-2 py-0.5 border rounded text-xs font-bold text-slate-700">
+        </div>
+        <div class="w-full">
+          <label class="text-slate-400 font-semibold block">UF (CLP)</label>
+          <input type="number" id="inputUF" value="40800" onchange="app.actualizarParametro('uf', this.value)" class="w-24 px-2 py-0.5 border rounded text-xs font-bold text-slate-700">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="app-container">
+
+    <!-- ====================================================================
+         VISTA 1: MODO CUESTIONARIO (WIZARD GUIADO POR PASOS)
+         ==================================================================== -->
+    <div id="vistaCuestionario" class="space-y-4">
+      
+      <!-- Navegador de Pasos (Stepper) -->
+      <nav class="stepper-nav">
+        <div class="step-item active" onclick="app.irAPasoCuestionario(1)" id="stepNav1">
+          <div class="step-number">1</div>
+          <span>Datos Generales</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(2)" id="stepNav2">
+          <div class="step-number">2</div>
+          <span>Ingeniería & HH</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(3)" id="stepNav3">
+          <div class="step-number">3</div>
+          <span>Equipos & Siemens</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(4)" id="stepNav4">
+          <div class="step-number">4</div>
+          <span>Integración & Tableros</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(5)" id="stepNav5">
+          <div class="step-number">5</div>
+          <span>Logística & Fletes</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(6)" id="stepNav6">
+          <div class="step-number">6</div>
+          <span>Márgenes Comerciales</span>
+        </div>
+        <div class="step-item" onclick="app.irAPasoCuestionario(7)" id="stepNav7">
+          <div class="step-number">7</div>
+          <span>Hitos & Garantías</span>
+        </div>
+      </nav>
+
+      <!-- PASO 1: DATOS GENERALES -->
+      <div id="pasoContenido1" class="step-pane">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="building" class="w-5 h-5 text-blue-600"></i>
+          Paso 1: Identificación del Proyecto y Cliente
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Ingrese la información básica del cliente, correlativo oficial y título de la oferta.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente</label>
+            <input type="text" id="q_cliente" class="w-full p-2 border rounded text-xs" list="listaClientes" placeholder="Ej: AZA / CMP Romeral" onchange="app.actualizarDato('cliente', this.value)">
+            <datalist id="listaClientes"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Planta / Faena / Ubicación</label>
+            <input type="text" id="q_planta" class="w-full p-2 border rounded text-xs" placeholder="Ej: Planta Colina, Santiago" onchange="app.actualizarDato('planta', this.value)">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Correlativo Oferta</label>
+            <input type="text" id="q_correlativo" class="w-full p-2 border rounded text-xs font-mono font-bold text-blue-700" placeholder="Ej: 101-2026" onchange="app.actualizarDato('correlativo', this.value)">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Título del Requerimiento / Proyecto</label>
+            <input type="text" id="q_titulo" class="w-full p-2 border rounded text-xs font-semibold" placeholder="Ej: Migración Arrancador Suave Sirius a Sinamics G120" onchange="app.actualizarDato('titulo', this.value)">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Contacto del Cliente</label>
+            <input type="text" id="q_contacto" class="w-full p-2 border rounded text-xs" placeholder="Ej: Estimados Sres. AZA" onchange="app.actualizarDato('contactoCliente', this.value)">
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <button onclick="app.irAPasoCuestionario(2)" class="btn btn-primary">
+            Siguiente: Horas de Ingeniería <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 2: INGENIERÍA & HH -->
+      <div id="pasoContenido2" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="cpu" class="w-5 h-5 text-blue-600"></i>
+          Paso 2: Estimación de Servicios e Horas Hombre (HH)
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Defina semanas de oficina, días en terreno y horas por especialidad según la tarifa estándar.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-3 bg-blue-50/60 rounded-lg border border-blue-100">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Semanas en Oficina (Análisis/Prog.)</label>
+            <input type="number" id="q_semanasOficina" class="w-full p-1.5 border rounded text-xs font-bold" min="0" value="2" onchange="app.actualizarDato('semanasOficina', this.value)">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Días en Terreno (PEM/Faena)</label>
+            <input type="number" id="q_diasTerreno" class="w-full p-1.5 border rounded text-xs font-bold" min="0" value="4" onchange="app.actualizarDato('diasTerreno', this.value)">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Subtotal HH Estimadas</label>
+            <div id="q_totalHH" class="text-sm font-extrabold text-blue-700 mt-1">198 HH</div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Costo Total Ingeniería</label>
+            <div id="q_costoIngenieria" class="text-sm font-extrabold text-slate-800 mt-1">$ 3.744.000</div>
+          </div>
+        </div>
+
+        <!-- Tabla interactiva de HH -->
+        <div class="overflow-x-auto">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ÍTEM</th>
+                <th>ESPECIALIDAD / PERFIL</th>
+                <th style="width: 100px;">CANT. HH</th>
+                <th style="width: 130px;" class="text-right">VALOR HH</th>
+                <th style="width: 140px;" class="text-right">COSTO TOTAL</th>
+                <th>ALCANCE / COMENTARIO</th>
+                <th style="width: 60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyIngenieriaCuestionario"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-3 flex justify-between items-center">
+          <button onclick="app.agregarFilaIngenieria()" class="btn btn-secondary text-xs">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Perfil de HH
+          </button>
+          <div class="flex gap-2">
+            <button onclick="app.irAPasoCuestionario(1)" class="btn btn-secondary">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+            </button>
+            <button onclick="app.irAPasoCuestionario(3)" class="btn btn-primary">
+              Siguiente: Equipos & Hardware <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 3: EQUIPOS & SIEMENS -->
+      <div id="pasoContenido3" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="box" class="w-5 h-5 text-blue-600"></i>
+          Paso 3: Suministro de Equipos y Hardware
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Seleccione equipos del catálogo o agregue nuevos con su grupo de descuento Siemens oficial (`XG`, `XD`, etc.).</p>
+
+        <!-- Selector rápido de catálogo -->
+        <div class="flex flex-wrap items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200 mb-4">
+          <label class="text-xs font-bold text-slate-700">Agregar desde Catálogo:</label>
+          <select id="selectEquipoCatalogo" class="text-xs p-1.5 border rounded flex-1 max-w-xl"></select>
+          <button onclick="app.agregarDesdeCatalogo()" class="btn btn-primary text-xs py-1.5 px-3">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar al Proyecto
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">ÍTEM</th>
+                <th style="width: 170px;">CÓDIGO DE PARTE</th>
+                <th>DESCRIPCIÓN TÉCNICA</th>
+                <th style="width: 100px;">GRUPO DESC.</th>
+                <th style="width: 110px;" class="text-right">LISTA USD</th>
+                <th style="width: 60px;">CANT.</th>
+                <th style="width: 110px;" class="text-right">C/U USD</th>
+                <th style="width: 120px;" class="text-right">C/U CLP</th>
+                <th style="width: 130px;" class="text-right">TOTAL CLP</th>
+                <th style="width: 40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyEquiposCuestionario"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="8" class="text-right font-bold">TOTAL EQUIPOS (COSTO NETO):</td>
+                <td id="q_totalEquiposCLP" class="text-right font-mono font-extrabold text-blue-800">$ 21.647.926</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="mt-3 flex justify-between items-center">
+          <button onclick="app.agregarFilaEquipo()" class="btn btn-secondary text-xs">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Ítem Manual
+          </button>
+          <div class="flex gap-2">
+            <button onclick="app.irAPasoCuestionario(2)" class="btn btn-secondary">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+            </button>
+            <button onclick="app.irAPasoCuestionario(4)" class="btn btn-primary">
+              Siguiente: Tableros e Integración <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 4: INTEGRACIÓN & TABLEROS -->
+      <div id="pasoContenido4" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="layers" class="w-5 h-5 text-blue-600"></i>
+          Paso 4: Integración Eléctrica y Fabricación de Tableros
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Horas de armado de tablero, borneras, canaletas y pruebas de taller.</p>
+
+        <div class="overflow-x-auto mb-4">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 60px;">ÍTEM</th>
+                <th>DESCRIPCIÓN</th>
+                <th style="width: 80px;">UNIDAD</th>
+                <th style="width: 90px;">CANTIDAD</th>
+                <th style="width: 130px;" class="text-right">COSTO UNITARIO</th>
+                <th style="width: 140px;" class="text-right">SUBTOTAL</th>
+                <th style="width: 50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyIntegracionCuestionario"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="5" class="text-right font-bold">TOTAL INTEGRACIÓN ELÉCTRICA:</td>
+                <td id="q_totalIntegracionCLP" class="text-right font-mono font-extrabold text-blue-800">$ 1.224.000</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="mt-3 flex justify-between items-center">
+          <button onclick="app.agregarFilaIntegracion()" class="btn btn-secondary text-xs">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Ítem Integración
+          </button>
+          <div class="flex gap-2">
+            <button onclick="app.irAPasoCuestionario(3)" class="btn btn-secondary">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+            </button>
+            <button onclick="app.irAPasoCuestionario(5)" class="btn btn-primary">
+              Siguiente: Logística & Fletes <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 5: LOGÍSTICA & FLETES -->
+      <div id="pasoContenido5" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="truck" class="w-5 h-5 text-blue-600"></i>
+          Paso 5: Logística, Viáticos de Terreno y Fletes
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Gastos de traslado a faena, alojamiento, viáticos, combustible y transporte de equipos.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- OTROS (VIÁTICOS) -->
+          <div>
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">7.0 Otros (Viáticos & Estadía)</h3>
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>CONCEPTO</th>
+                  <th style="width: 70px;">CANT.</th>
+                  <th style="width: 100px;" class="text-right">VALOR UNIT.</th>
+                  <th style="width: 110px;" class="text-right">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyOtrosCuestionario"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="3" class="text-right font-bold">TOTAL OTROS:</td>
+                  <td id="q_totalOtrosCLP" class="text-right font-mono font-bold">$ 1.130.000</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- FLETES Y MONTAJE -->
+          <div>
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">5.0 Fletes y 6.0 Montajes</h3>
+            <table class="excel-table mb-4">
+              <thead>
+                <tr>
+                  <th>FLETE / TRANSPORTE</th>
+                  <th style="width: 70px;">CANT.</th>
+                  <th style="width: 100px;" class="text-right">UNITARIO</th>
+                  <th style="width: 110px;" class="text-right">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyFleteCuestionario"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="3" class="text-right font-bold">TOTAL FLETES:</td>
+                  <td id="q_totalFleteCLP" class="text-right font-mono font-bold">$ 400.000</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>MONTAJE / MAQUINARIA</th>
+                  <th style="width: 70px;">CANT.</th>
+                  <th style="width: 100px;" class="text-right">UNITARIO</th>
+                  <th style="width: 110px;" class="text-right">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyMontajeCuestionario"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="3" class="text-right font-bold">TOTAL MONTAJE:</td>
+                  <td id="q_totalMontajeCLP" class="text-right font-mono font-bold">$ 0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-between items-center">
+          <button onclick="app.irAPasoCuestionario(4)" class="btn btn-secondary">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+          </button>
+          <button onclick="app.irAPasoCuestionario(6)" class="btn btn-primary">
+            Siguiente: Márgenes Comerciales <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 6: MÁRGENES COMERCIALES -->
+      <div id="pasoContenido6" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="trending-up" class="w-5 h-5 text-blue-600"></i>
+          Paso 6: Definición de Márgenes y Precio de Venta
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Los precios se calculan con la fórmula corporativa: <code>Precio = Costo / (1 - Margen)</code>.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Ingeniería (HH)</span>
+                <span id="lblMargenIngenieria" class="text-blue-600">55%</span>
+              </div>
+              <input type="range" id="sliderMargenIngenieria" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('ingenieria', this.value)" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Integración Eléctrica</span>
+                <span id="lblMargenIntegracion" class="text-blue-600">55%</span>
+              </div>
+              <input type="range" id="sliderMargenIntegracion" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('integracion', this.value)" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Equipos & Hardware</span>
+                <span id="lblMargenEquipos" class="text-blue-600">30%</span>
+              </div>
+              <input type="range" id="sliderMargenEquipos" min="5" max="50" step="1" value="30" oninput="app.ajustarMargen('equipos', this.value)" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Fletes & Transporte</span>
+                <span id="lblMargenFlete" class="text-blue-600">10%</span>
+              </div>
+              <input type="range" id="sliderMargenFlete" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('flete', this.value)" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Otros (Logística/Terreno)</span>
+                <span id="lblMargenOtros" class="text-blue-600">10%</span>
+              </div>
+              <input type="range" id="sliderMargenOtros" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('otros', this.value)" class="w-full">
+            </div>
+          </div>
+
+          <!-- Resumen Consolidado -->
+          <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Consolidado Económico de la Oferta</h3>
+              
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b">
+                  <span class="text-slate-600">Suministro de Hardware:</span>
+                  <span id="resumenEquiposVenta" class="font-mono font-bold">$ 30.925.609</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                  <span class="text-slate-600">Ingeniería & Integración:</span>
+                  <span id="resumenIngenieriaVenta" class="font-mono font-bold">$ 11.040.000</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                  <span class="text-slate-600">Logística, Flete y Terreno:</span>
+                  <span id="resumenLogisticaVenta" class="font-mono font-bold">$ 1.700.000</span>
+                </div>
+                <div class="flex justify-between py-2 border-b-2 border-slate-800 text-sm font-bold">
+                  <span>PRECIO OFERTA TOTAL CLP:</span>
+                  <span id="resumenTotalVentaCLP" class="font-mono text-emerald-700">$ 43.665.609</span>
+                </div>
+                <div class="flex justify-between py-1 font-bold text-slate-700">
+                  <span>PRECIO OFERTA TOTAL USD:</span>
+                  <span id="resumenTotalVentaUSD" class="font-mono text-emerald-800">$ 45.964 USD</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-emerald-50 rounded border border-emerald-200 text-xs">
+              <span class="font-bold text-emerald-900 block mb-0.5">Rentabilidad Estimada:</span>
+              <div class="flex justify-between text-emerald-800">
+                <span>Margen Global del Proyecto:</span>
+                <span id="resumenMargenGlobal" class="font-extrabold text-sm">36,0%</span>
+              </div>
+              <div class="flex justify-between text-emerald-800">
+                <span>Utilidad Bruta Proyectada:</span>
+                <span id="resumenUtilidadBruta" class="font-extrabold text-sm">$ 15.519.683</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-between items-center">
+          <button onclick="app.irAPasoCuestionario(5)" class="btn btn-secondary">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+          </button>
+          <button onclick="app.irAPasoCuestionario(7)" class="btn btn-primary">
+            Siguiente: Hitos & Garantía Legal <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 7: HITOS & GARANTÍAS -->
+      <div id="pasoContenido7" class="step-pane hidden">
+        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i>
+          Paso 7: Condiciones Comerciales, Estados de Pago y Garantías Legales
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Configure la tabla de hitos (EP1 a EP4) y revise las cláusulas legales y de garantía KEV Process que se incluirán en el documento Word.</p>
+
+        <!-- Tabla de Hitos de Pago -->
+        <div class="mb-6">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tabla de Estados de Pago (Debe sumar 100%)</h3>
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">EP</th>
+                <th>HITO ASOCIADO</th>
+                <th style="width: 100px;" class="text-right">% DE PAGO</th>
+                <th style="width: 140px;" class="text-right">MONTO CLP</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHitosPago"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="2" class="text-right font-bold">TOTAL ESTADOS DE PAGO:</td>
+                <td id="q_totalPctHitos" class="text-right font-mono font-bold text-emerald-700">100%</td>
+                <td id="q_totalMontoHitos" class="text-right font-mono font-bold text-slate-800">$ 43.665.609</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Cláusulas Legales y de Garantía -->
+        <div>
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Bases Legales, Contractuales y Cobertura de Garantía</h3>
+          <div class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs">
+            <div id="contenedorBasesLegales" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Botones Finales de Generación -->
+        <div class="mt-6 flex justify-between items-center p-4 bg-blue-50/70 border border-blue-200 rounded-lg">
+          <button onclick="app.irAPasoCuestionario(6)" class="btn btn-secondary">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+          </button>
+          <div class="flex gap-3">
+            <button onclick="app.exportarXLSX()" class="btn btn-success">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              Generar Planilla XLSX Idéntica
+            </button>
+            <button onclick="app.exportarDOCX()" class="btn btn-primary">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              Generar Propuesta Word (.docx)
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         VISTA 2: MODO DESARROLLO (PLANILLA MATRICIAL CON 9 PESTAÑAS EXCEL)
+         ==================================================================== -->
+    <div id="vistaDesarrollo" class="hidden">
+      
+      <!-- Pestañas de Excel -->
+      <div class="excel-tabs">
+        <button class="excel-tab active" onclick="app.setExcelTab('RESUMEN GENERAL')">RESUMEN GENERAL</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Ingeniería y Planificación')">Ingeniería y Planificación</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Adicionales')">Adicionales</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Integración Eléctrica')">Integración Eléctrica</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Equipos')">Equipos</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Flete')">Flete</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Montaje')">Montaje</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Otros')">Otros (Logística)</button>
+        <button class="excel-tab" onclick="app.setExcelTab('Listado')">Listado (Cliente)</button>
+      </div>
+
+      <!-- Contenedor de Grilla Matricial -->
+      <div class="excel-table-container">
+        
+        <!-- PESTAÑA: RESUMEN GENERAL -->
+        <div id="tabGrid_RESUMEN GENERAL">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-slate-800">1.0 RESUMEN GENERAL DE COSTOS Y PRECIOS</h3>
+            <span class="text-xs text-slate-500">Plan de Compras Preliminar y Resumen Ejecutivo</span>
+          </div>
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">ÍTEM</th>
+                <th>DESCRIPCIÓN</th>
+                <th style="width: 150px;" class="text-right">COSTO TOTAL</th>
+                <th style="width: 100px;" class="text-right">MARGEN</th>
+                <th style="width: 160px;" class="text-right">PRECIO CLP</th>
+                <th style="width: 140px;" class="text-right">PRECIO USD</th>
+              </tr>
+            </thead>
+            <tbody id="gridTbodyResumenGeneral"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="2" class="text-right font-extrabold">PRECIO OFERTA PROYECTO:</td>
+                <td id="gridResumenTotalCosto" class="text-right font-mono font-extrabold text-slate-800"></td>
+                <td id="gridResumenMargenTotal" class="text-right font-mono font-extrabold text-blue-700"></td>
+                <td id="gridResumenTotalPrecioCLP" class="text-right font-mono font-extrabold text-emerald-700"></td>
+                <td id="gridResumenTotalPrecioUSD" class="text-right font-mono font-extrabold text-emerald-800"></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Cuadro Desglose P&PEM vs Equipos -->
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="border rounded p-3 bg-slate-50">
+              <h4 class="text-xs font-bold text-slate-700 mb-2">Desglose de Oferta (P&PEM vs Equipos)</h4>
+              <table class="excel-table text-xs">
+                <tr><td>Costos de Equipos:</td><td class="num-cell" id="gridDesgloseEquipos"></td></tr>
+                <tr><td>Programación y Puesta en Marcha:</td><td class="num-cell" id="gridDesglosePPEM"></td></tr>
+                <tr><td>Logística y Fletes:</td><td class="num-cell" id="gridDesgloseLogistica"></td></tr>
+                <tr class="total-row"><td>TOTAL CONSOLIDADO:</td><td class="num-cell" id="gridDesgloseTotal"></td></tr>
+              </table>
+            </div>
+            <div class="border rounded p-3 bg-slate-50 flex flex-col justify-center">
+              <p class="text-xs text-slate-600">
+                <strong>Nota de Auditoría:</strong> Los valores aquí reflejados se sincronizan automáticamente con las 8 hojas de detalle y el Modo Cuestionario. Cualquier edición en cualquiera de los modos actualiza la planilla y los documentos de exportación.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- OTRAS PESTAÑAS (Se renderizan dinámicamente) -->
+        <div id="tabGrid_Generico" class="hidden">
+          <div class="flex justify-between items-center mb-3">
+            <h3 id="tituloTabGenerico" class="text-sm font-bold text-slate-800"></h3>
+            <button onclick="app.agregarFilaTabActual()" class="btn btn-secondary text-xs">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Fila
+            </button>
+          </div>
+          <div id="contenedorTabGenerico" class="overflow-x-auto"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE PREVISUALIZACIÓN DE PROPUESTA TÉCNICO-COMERCIAL -->
+  <div id="modalPrevisualizacion" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
+          Previsualización de Propuesta Técnico-Comercial & Contractual
+        </h3>
+        <button onclick="app.cerrarModalPrevisualizacion()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="modal-body font-serif text-slate-800 text-xs leading-relaxed space-y-4" id="cuerpoPrevisualizacion">
+        <!-- Renderizado dinámico del documento Word -->
+      </div>
+      <div class="modal-footer">
+        <button onclick="app.cerrarModalPrevisualizacion()" class="btn btn-secondary text-xs">Cerrar</button>
+        <button onclick="app.exportarDOCX()" class="btn btn-primary text-xs">
+          <i data-lucide="download" class="w-4 h-4"></i> Descargar Documento Word (.docx)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts de la Aplicación -->
+  <script src="presets.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
