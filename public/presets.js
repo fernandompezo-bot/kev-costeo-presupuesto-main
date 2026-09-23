@@ -30,6 +30,30 @@ const KEV_MAESTROS = {
     "NETO": { nombre: "Sin Descuento (Costo Neto)", descuento: 0.00 }
   },
 
+  descuentosSiemensOficiales: {
+    "XG": { nombre: "Variadores Sinamics / Drives", descuento: 0.55 },
+    "XD": { nombre: "Aparamenta Sirius / Contactores", descuento: 0.61 },
+    "X1": { nombre: "Control y Maniobra BT", descuento: 0.41 },
+    "X3": { nombre: "Protecciones / Interruptores", descuento: 0.41 },
+    "X4": { nombre: "Accesorios y Fusibles", descuento: 0.44 },
+    "ZF": { nombre: "Automatización S7 / HMI", descuento: 0.41 },
+    "ZG": { nombre: "Comunicaciones / Redes", descuento: 0.44 },
+    "1°": { nombre: "Motores y Accionamientos", descuento: 0.55 },
+    "2°": { nombre: "Sistemas Especiales 2", descuento: 0.52 },
+    "4°": { nombre: "Instrumentación de Campo", descuento: 0.52 },
+    "YC": { nombre: "Repuestos y Licencias", descuento: 0.59 },
+    "NETO": { nombre: "Sin Descuento (Costo Neto)", descuento: 0.00 }
+  },
+
+  textosPropuestaEstandar: {
+    saludo: 'Por medio de la presente comunicación, envío a usted nuestra propuesta técnico-comercial por el requerimiento de "{titulo}", para las instalaciones de {planta}.',
+    requerimiento: 'De acuerdo con lo coordinado con {cliente}, se presenta la oferta técnica y económica para la ejecución del servicio de {titulo}. El proyecto contempla las fases de diseño preliminar, ingeniería de detalle, programación de lógicas de control, suministro de equipos, integración de tableros, pruebas en taller y comisionamiento en faena.',
+    metodologia: 'Se contemplan {semanasOficina} semanas de trabajo en oficina para análisis de planimetría, desarrollo de lógicas de control PLC/SCADA y pruebas de validación. Asimismo, se consideran {diasTerreno} días de faena en terreno para levantamiento, marcaje, interconexión eléctrica, carga de software y pruebas de puesta en servicio (PEM).',
+    requerimientosPrevios: '• Planimetría unilineal y diagramas de conexionado actualizados del área de intervención.\n• Arquitectura de red y mapas de memoria vigentes de PLC / controladores existentes.\n• Detención programada de equipos y disponibilidad de personal de operación y mantenimiento.\n• Permisos de acceso a faena e inducciones de seguridad aplicables.',
+    entregables: '• Protocolos de prueba firmados en terreno.\n• Respaldos completos de software (código fuente PLC/SCADA/Drives).\n• Planos red-line actualizados conforme a la implementación realizada.',
+    notasEspeciales: ''
+  },
+
   clientesFrecuentes: [
     { nombre: "AZA", planta: "Planta Colina, Santiago", contacto: "Eduardo / Juan" },
     { nombre: "CMP Romeral", planta: "Faena El Romeral, La Serena", contacto: "Administrador de Contrato" },

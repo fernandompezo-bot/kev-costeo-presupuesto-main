@@ -43,13 +43,27 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
-  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR (LIMPIA CON INFORMACIÓN RELEVANTE) -->
   <header class="header-bar">
-    <div class="brand-badge">
-      <div class="brand-logo-box">KEV</div>
-      <div>
-        <h1 class="text-base font-bold tracking-wide">KEV PROCESS SpA</h1>
-        <p class="text-xs text-slate-300">Presupuesto & Costeo de Proyectos de Ingeniería</p>
+    <div class="flex items-center gap-3">
+      <!-- Botón Toggle Barra Lateral -->
+      <button id="btnToggleSidebar" onclick="app.toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition cursor-pointer" title="Menú de Navegación y Herramientas">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Logo Corporativo -->
+      <div class="brand-badge">
+        <div class="brand-logo-box">KEV</div>
+        <div class="hidden sm:block">
+          <h1 class="text-sm font-bold tracking-wide leading-tight">KEV PROCESS SpA</h1>
+          <p class="text-[11px] text-slate-300">Ingeniería & Control</p>
+        </div>
+      </div>
+
+      <!-- Identificador de Proyecto Activo -->
+      <div class="header-project-badge hidden lg:flex ml-3 pl-3 border-l border-slate-700">
+        <span id="topHeaderCorrelativo" class="font-extrabold text-blue-400 text-xs tracking-wider">101-2026</span>
+        <span id="topHeaderTitulo" class="text-xs text-slate-200 font-medium truncate max-w-[260px]">Migración Arrancador Sirius</span>
       </div>
     </div>
 
@@ -57,76 +71,147 @@
     <div class="mode-toggle-container">
       <button id="btnModoCuestionario" class="mode-btn active" onclick="app.setModo('cuestionario')">
         <i data-lucide="clipboard-list" class="w-4 h-4"></i>
-        Modo Cuestionario
+        <span class="hidden md:inline">Modo Cuestionario</span>
       </button>
       <button id="btnModoDesarrollo" class="mode-btn" onclick="app.setModo('desarrollo')">
         <i data-lucide="table" class="w-4 h-4"></i>
-        Modo Desarrollo (Planilla)
+        <span class="hidden md:inline">Modo Planilla</span>
       </button>
     </div>
 
-    <!-- ESTADO DE AUTO-GUARDADO Y ACCIONES -->
+    <!-- KPIS RELEVANTES EN TIEMPO REAL & AUTO-GUARDADO -->
     <div class="flex items-center gap-2">
+      <!-- Venta Total CLP -->
+      <div class="header-kpi-pill">
+        <span class="text-[9px] uppercase font-bold text-slate-400 leading-none">Venta CLP</span>
+        <span id="topHeaderVentaCLP" class="font-bold text-emerald-400 font-mono text-xs sm:text-sm">$ 43.665.609</span>
+      </div>
+
+      <!-- Venta Total USD -->
+      <div class="header-kpi-pill hidden sm:flex">
+        <span class="text-[9px] uppercase font-bold text-slate-400 leading-none">USD</span>
+        <span id="topHeaderVentaUSD" class="font-bold text-slate-100 font-mono text-xs">$ 45.964</span>
+      </div>
+
+      <!-- Margen Global -->
+      <div class="header-kpi-pill">
+        <span class="text-[9px] uppercase font-bold text-slate-400 leading-none">Margen</span>
+        <span id="topHeaderMargen" class="font-extrabold text-blue-400 text-xs sm:text-sm">35,5%</span>
+      </div>
+
       <!-- Badge de Auto-Guardado -->
       <div id="autoSaveIndicator" class="autosave-badge" title="Guardado automático local activo">
         <div class="autosave-dot"></div>
-        <span id="autoSaveText">Auto-guardado</span>
+        <span id="autoSaveText" class="hidden xl:inline">Guardado</span>
       </div>
-
-      <!-- Selector de Presets -->
-      <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="text-xs py-1.5 px-2 rounded bg-slate-800 text-white border border-slate-600 focus:outline-none focus:border-blue-400">
-        <option value="101-2026">⚡ 101-2026 (Sirius a G120)</option>
-        <option value="061-2026">⚡ 061-2026 (Asistencia PCS7)</option>
-        <option value="037-2026">⚡ 037-2026 (Hardware IPC)</option>
-        <option value="blanco">📄 Proyecto en Blanco</option>
-      </select>
-
-      <!-- Importar XLSX -->
-      <button onclick="app.abrirModalImportarXLSX()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Importar planilla XLSX existente">
-        <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-600"></i>
-        Importar XLSX
-      </button>
-
-      <!-- Guardar / Cargar JSON -->
-      <button onclick="app.exportarJSON()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Descargar borrador JSON">
-        <i data-lucide="save" class="w-3.5 h-3.5 text-blue-600"></i>
-        Guardar
-      </button>
-      <button onclick="document.getElementById('inputImportJSON').click()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Cargar borrador JSON">
-        <i data-lucide="folder-open" class="w-3.5 h-3.5 text-amber-600"></i>
-        Abrir
-      </button>
-      <input type="file" id="inputImportJSON" accept=".json" class="hidden" onchange="app.importarJSON(event)">
-
-      <!-- Copiar Resumen para Email -->
-      <button onclick="app.copiarResumenEmail()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Copiar resumen ejecutivo al portapapeles para enviar por email">
-        <i data-lucide="mail" class="w-3.5 h-3.5 text-indigo-600"></i>
-        Copiar Email
-      </button>
-
-      <!-- Botón Exportar Excel -->
-      <button onclick="app.exportarXLSX()" class="btn btn-success text-xs py-1.5 px-3" title="Genera planilla XLSX con formato y fórmulas exactas de 9 hojas">
-        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-        XLSX
-      </button>
-
-      <!-- Botón Exportar Word -->
-      <button onclick="app.exportarDOCX()" class="btn btn-primary text-xs py-1.5 px-3" title="Genera propuesta técnico-comercial en Word con bases legales y garantías">
-        <i data-lucide="file-text" class="w-4 h-4"></i>
-        Word (.docx)
-      </button>
-
-      <!-- Botón Previsualizar Propuesta -->
-      <button onclick="app.abrirModalPrevisualizacion()" class="btn btn-secondary text-xs py-1.5 px-2" title="Previsualizar propuesta Word">
-        <i data-lucide="eye" class="w-4 h-4"></i>
-      </button>
-
-      <!-- Botón Configuración de Tarifas y Catálogo -->
-      <button onclick="app.abrirModalConfiguracion()" class="btn btn-secondary text-xs py-1.5 px-2" title="Configurar tarifas de HH, viáticos y catálogo personalizado">
-        <i data-lucide="settings" class="w-4 h-4 text-slate-700"></i>
-      </button>
     </div>
   </header>
+
+  <!-- BARRA LATERAL (SIDEBAR DRAWER) CON AUTOHIDE -->
+  <div id="appSidebarOverlay" class="sidebar-overlay" onclick="app.toggleSidebar(false)"></div>
+  <aside id="appSidebar" class="sidebar-drawer" onmouseleave="app.onSidebarMouseLeave()">
+    <!-- Header Sidebar -->
+    <div class="sidebar-header">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">KEV</div>
+        <span class="font-bold text-sm tracking-wide text-white">Menú de Gestión</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button id="btnPinSidebar" onclick="app.togglePinSidebar()" class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer" title="Fijar barra lateral">
+          <i data-lucide="pin" class="w-4 h-4"></i>
+        </button>
+        <button onclick="app.toggleSidebar(false)" class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer" title="Cerrar">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cuerpo Sidebar -->
+    <div class="sidebar-body">
+      <!-- 1. Presets de Proyectos -->
+      <div>
+        <div class="sidebar-section-title">Plantilla / Preset Base</div>
+        <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="w-full text-xs py-2 px-2.5 rounded bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-blue-500">
+          <option value="101-2026">⚡ 101-2026 (Sirius a G120)</option>
+          <option value="061-2026">⚡ 061-2026 (Asistencia PCS7)</option>
+          <option value="037-2026">⚡ 037-2026 (Hardware IPC)</option>
+          <option value="blanco">📄 Proyecto en Blanco</option>
+        </select>
+      </div>
+
+      <!-- 2. Operaciones y Respaldo -->
+      <div>
+        <div class="sidebar-section-title">Gestión de Archivos</div>
+        <div class="space-y-1">
+          <button onclick="app.abrirModalImportarXLSX()" class="sidebar-menu-btn">
+            <i data-lucide="upload" class="w-4 h-4 text-emerald-400"></i>
+            <span>Importar Planilla XLSX</span>
+          </button>
+          <button onclick="app.exportarJSON()" class="sidebar-menu-btn">
+            <i data-lucide="save" class="w-4 h-4 text-blue-400"></i>
+            <span>Guardar Proyecto (JSON)</span>
+          </button>
+          <button onclick="document.getElementById('inputImportJSON').click()" class="sidebar-menu-btn">
+            <i data-lucide="folder-open" class="w-4 h-4 text-amber-400"></i>
+            <span>Abrir Proyecto (JSON)</span>
+          </button>
+          <input type="file" id="inputImportJSON" accept=".json" class="hidden" onchange="app.importarJSON(event)">
+          <button onclick="app.copiarResumenEmail()" class="sidebar-menu-btn">
+            <i data-lucide="mail" class="w-4 h-4 text-indigo-400"></i>
+            <span>Copiar Resumen para Correo</span>
+          </button>
+          <button onclick="app.abrirModalConfiguracion()" class="sidebar-menu-btn">
+            <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+            <span>Configuración (Tarifas / Siemens)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Navegación Cuestionario -->
+      <div>
+        <div class="sidebar-section-title">Pasos del Proyecto</div>
+        <div class="space-y-1 text-xs">
+          <button onclick="app.irAPasoCuestionario(1); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="building" class="w-3.5 h-3.5 text-slate-400"></i> 1. Datos Generales & Cliente
+          </button>
+          <button onclick="app.irAPasoCuestionario(2); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> 2. Ingeniería, HH & Gantt
+          </button>
+          <button onclick="app.irAPasoCuestionario(3); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-slate-400"></i> 3. Equipos & Siemens
+          </button>
+          <button onclick="app.irAPasoCuestionario(4); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="wrench" class="w-3.5 h-3.5 text-slate-400"></i> 4. Integración Eléctrica
+          </button>
+          <button onclick="app.irAPasoCuestionario(5); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="truck" class="w-3.5 h-3.5 text-slate-400"></i> 5. Logística & Terreno
+          </button>
+          <button onclick="app.irAPasoCuestionario(6); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-slate-400"></i> 6. Márgenes Comerciales
+          </button>
+          <button onclick="app.irAPasoCuestionario(7); app.toggleSidebar(false)" class="sidebar-menu-btn">
+            <i data-lucide="file-check" class="w-3.5 h-3.5 text-slate-400"></i> 7. Documento Oferta & Hitos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Sidebar: Emisión Oficial -->
+    <div class="sidebar-footer">
+      <button onclick="app.exportarXLSX()" class="btn btn-success w-full text-xs justify-center py-2 font-bold shadow-md cursor-pointer">
+        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+        Generar Planilla XLSX (9 Hojas)
+      </button>
+      <button onclick="app.exportarDOCX()" class="btn btn-primary w-full text-xs justify-center py-2 font-bold shadow-md cursor-pointer">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        Generar Propuesta Word (.docx)
+      </button>
+      <button onclick="app.abrirModalPrevisualizacion()" class="btn btn-secondary w-full text-xs justify-center py-1.5 text-slate-300 cursor-pointer">
+        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+        Previsualizar Documento
+      </button>
+    </div>
+  </aside>
 
   <!-- BARRA RESUMEN KPI EN TIEMPO REAL -->
   <section class="bg-white border-b border-slate-200 px-6 py-3 shadow-sm">
@@ -661,6 +746,87 @@
           </div>
         </div>
 
+        <!-- TEXTOS PERSONALIZADOS POR SECCIÓN (DOCUMENTO WORD .DOCX) -->
+        <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="edit-3" class="w-4 h-4 text-blue-600"></i>
+              Textos del Documento de Oferta (Uno por Sección según Formato KEV)
+            </h3>
+            <button onclick="app.restablecerTextosPropuesta()" class="btn btn-secondary text-xs py-1 px-2 text-slate-600" title="Restablecer textos estándar">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restablecer Redacción
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Personalice los párrafos descriptivos que se imprimirán en cada sección del archivo Word (.docx).</p>
+
+          <div class="space-y-3">
+            <!-- 1. Saludo y Presentación -->
+            <div class="text-section-card">
+              <div class="text-section-header" onclick="app.toggleSeccionTexto('saludo')">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-blue-600"></i> Carta de Presentación & Saludo Inicial
+                </span>
+                <i id="iconToggle_saludo" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+              <div id="bodyTexto_saludo" class="text-section-body">
+                <textarea id="q_textoSaludo" rows="2" class="text-section-textarea" oninput="app.actualizarTextoPropuesta('saludo', this.value)"></textarea>
+              </div>
+            </div>
+
+            <!-- 2. Requerimiento y Alcance -->
+            <div class="text-section-card">
+              <div class="text-section-header" onclick="app.toggleSeccionTexto('requerimiento')">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i> 1. Requerimiento y Alcance General
+                </span>
+                <i id="iconToggle_requerimiento" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+              <div id="bodyTexto_requerimiento" class="text-section-body">
+                <textarea id="q_textoRequerimiento" rows="3" class="text-section-textarea" oninput="app.actualizarTextoPropuesta('requerimiento', this.value)"></textarea>
+              </div>
+            </div>
+
+            <!-- 3. Metodología de Trabajo -->
+            <div class="text-section-card">
+              <div class="text-section-header" onclick="app.toggleSeccionTexto('metodologia')">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i> 2. Propuesta Técnica, Metodología y Gantt
+                </span>
+                <i id="iconToggle_metodologia" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+              <div id="bodyTexto_metodologia" class="text-section-body">
+                <textarea id="q_textoMetodologia" rows="3" class="text-section-textarea" oninput="app.actualizarTextoPropuesta('metodologia', this.value)"></textarea>
+              </div>
+            </div>
+
+            <!-- 4. Requerimientos Previos del Cliente -->
+            <div class="text-section-card">
+              <div class="text-section-header" onclick="app.toggleSeccionTexto('requerimientosPrevios')">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="check-square" class="w-3.5 h-3.5 text-blue-600"></i> 3. Requerimientos Previos y Obligaciones del Cliente
+                </span>
+                <i id="iconToggle_requerimientosPrevios" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+              <div id="bodyTexto_requerimientosPrevios" class="text-section-body">
+                <textarea id="q_textoReqPrevios" rows="4" class="text-section-textarea" oninput="app.actualizarTextoPropuesta('requerimientosPrevios', this.value)"></textarea>
+              </div>
+            </div>
+
+            <!-- 5. Entregables -->
+            <div class="text-section-card">
+              <div class="text-section-header" onclick="app.toggleSeccionTexto('entregables')">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="package-check" class="w-3.5 h-3.5 text-blue-600"></i> 6. Entregables al Término del Servicio
+                </span>
+                <i id="iconToggle_entregables" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+              <div id="bodyTexto_entregables" class="text-section-body">
+                <textarea id="q_textoEntregables" rows="3" class="text-section-textarea" oninput="app.actualizarTextoPropuesta('entregables', this.value)"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Exclusiones Personalizables -->
         <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
           <div class="flex justify-between items-center mb-2">
@@ -868,7 +1034,7 @@
       </div>
       <div class="modal-body space-y-4">
         <!-- Selector de Pestaña de Configuración -->
-        <div class="flex gap-2 border-b pb-2 text-xs">
+        <div class="flex gap-2 border-b pb-2 text-xs overflow-x-auto">
           <button id="btnTabCfgHH" class="px-3 py-1 font-bold rounded bg-blue-100 text-blue-900" onclick="app.setTabConfig('hh')">
             Tarifas de HH
           </button>
@@ -877,6 +1043,9 @@
           </button>
           <button id="btnTabCfgEquipos" class="px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700" onclick="app.setTabConfig('equipos')">
             Catálogo de Equipos Frecuentes
+          </button>
+          <button id="btnTabCfgSiemens" class="px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700" onclick="app.setTabConfig('siemens')">
+            Matriz Descuentos Siemens
           </button>
         </div>
 
@@ -912,6 +1081,29 @@
                 </tr>
               </thead>
               <tbody id="cfgTbodyEquipos"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pestaña 4: Matriz Descuentos Siemens -->
+        <div id="cfgPane_siemens" class="space-y-3 hidden">
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Ajuste los porcentajes oficiales de descuento Siemens o agregue nuevas familias.</p>
+            <button onclick="app.agregarFamiliaSiemens()" class="btn btn-secondary text-xs py-1 px-2">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nueva Familia
+            </button>
+          </div>
+          <div class="overflow-x-auto max-h-64">
+            <table class="excel-table text-xs">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">CÓDIGO</th>
+                  <th>DESCRIPCIÓN DE LA CATEGORÍA</th>
+                  <th style="width: 110px;" class="text-right">% DESCUENTO</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="cfgTbodySiemens"></tbody>
             </table>
           </div>
         </div>

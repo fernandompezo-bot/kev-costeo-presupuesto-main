@@ -10,6 +10,7 @@ class KEVPresupuestoApp {
     this.pasoCuestionario = 1;
     this.tabExcelActual = 'RESUMEN GENERAL';
     this.tabConfigActual = 'hh';
+    this.sidebarPinned = false;
 
     // Cargar tarifas y catálogos personalizados desde localStorage
     this.cargarConfiguracionUsuario();
@@ -354,6 +355,14 @@ class KEVPresupuestoApp {
     this.setElemText('kpiMargenConsolidado', `${(calc.margenConsolidado * 100).toFixed(1)}%`);
     this.setElemText('kpiPrecioCLP', this.fmtCLP(calc.precioTotalProyecto));
     this.setElemText('kpiPrecioUSD', `$ ${calc.precioTotalUSD.toLocaleString('es-CL')} USD`);
+
+    // Actualizar Top Header Minimalista con KPIs
+    this.setElemText('topHeaderCorrelativo', p.correlativo);
+    this.setElemText('topHeaderTitulo', `${p.cliente} - ${p.titulo}`);
+    this.setElemText('topHeaderVentaCLP', this.fmtCLP(calc.precioTotalProyecto));
+    this.setElemText('topHeaderVentaUSD', `$ ${calc.precioTotalUSD.toLocaleString('es-CL')}`);
+    this.setElemText('topHeaderMargen', `${(calc.margenConsolidado * 100).toFixed(1)}%`);
+
 
     // Actualizar inputs generales
     this.setElemVal('q_cliente', p.cliente);
@@ -1465,7 +1474,7 @@ ${hitosTexto}
 
   setTabConfig(tab) {
     this.tabConfigActual = tab;
-    ['hh', 'logistica', 'equipos'].forEach(t => {
+    ['hh', 'logistica', 'equipos', 'siemens'].forEach(t => {
       const btn = document.getElementById(`btnTabCfg${t.charAt(0).toUpperCase() + t.slice(1)}`);
       const pane = document.getElementById(`cfgPane_${t}`);
       if (btn && pane) {
@@ -1534,6 +1543,55 @@ ${hitosTexto}
     }
   }
 
+
+  editarFamiliaSiemensNombre(codigo, nombre) {
+    if (KEV_MAESTROS.descuentosSiemens[codigo]) {
+      KEV_MAESTROS.descuentosSiemens[codigo].nombre = nombre;
+    }
+  }
+
+  editarFamiliaSiemensDescuento(codigo, valorPct) {
+    const pct = Math.max(0, Math.min(100, Number(valorPct) || 0));
+    if (KEV_MAESTROS.descuentosSiemens[codigo]) {
+      KEV_MAESTROS.descuentosSiemens[codigo].descuento = pct / 100;
+      this.render();
+    }
+  }
+
+  agregarFamiliaSiemens() {
+    const cod = prompt("Ingrese el Código de la nueva Familia Siemens (ej: SF, SC, M1):");
+    if (!cod) return;
+    const cleanCod = cod.trim().toUpperCase();
+    if (KEV_MAESTROS.descuentosSiemens[cleanCod]) {
+      alert("La familia " + cleanCod + " ya existe.");
+      return;
+    }
+    const nombre = prompt("Descripción de la Familia / Categoría:", "Familia " + cleanCod);
+    const pctStr = prompt("% de Descuento Oficial (ej: 45):", "40");
+    const pct = Math.max(0, Math.min(100, Number(pctStr) || 40));
+
+    KEV_MAESTROS.descuentosSiemens[cleanCod] = {
+      nombre: nombre || ("Familia " + cleanCod),
+      descuento: pct / 100
+    };
+
+    localStorage.setItem('kev_cfg_descuentos_siemens', JSON.stringify(KEV_MAESTROS.descuentosSiemens));
+    this.renderTabConfiguracion('siemens');
+    this.render();
+    this.showToast(`Familia Siemens ${cleanCod} agregada (${pct}%)`, "success");
+  }
+
+  eliminarFamiliaSiemens(codigo) {
+    if (codigo === 'NETO') return;
+    if (confirm(`¿Eliminar la familia Siemens ${codigo}?`)) {
+      delete KEV_MAESTROS.descuentosSiemens[codigo];
+      localStorage.setItem('kev_cfg_descuentos_siemens', JSON.stringify(KEV_MAESTROS.descuentosSiemens));
+      this.renderTabConfiguracion('siemens');
+      this.render();
+      this.showToast(`Familia ${codigo} eliminada`, "info");
+    }
+  }
+
   agregarEquipoACatalogo() {
     KEV_MAESTROS.catalogoEquiposFrecuentes.unshift({
       codigo: "NUEVO-CODIGO",
@@ -1587,6 +1645,7 @@ ${hitosTexto}
       if (elUSD) eq.listaUSD = Number(elUSD.value) || 0;
     });
     localStorage.setItem('kev_cfg_catalogo_equipos', JSON.stringify(KEV_MAESTROS.catalogoEquiposFrecuentes));
+    localStorage.setItem('kev_cfg_descuentos_siemens', JSON.stringify(KEV_MAESTROS.descuentosSiemens));
 
     this.inicializarSelectores();
     this.cerrarModalConfiguracion();
@@ -1598,6 +1657,7 @@ ${hitosTexto}
       localStorage.removeItem('kev_cfg_tarifas_hh');
       localStorage.removeItem('kev_cfg_tarifas_logistica');
       localStorage.removeItem('kev_cfg_catalogo_equipos');
+      localStorage.removeItem('kev_cfg_descuentos_siemens');
       location.reload();
     }
   }
@@ -1965,6 +2025,69 @@ ${hitosTexto}
         : KEV_MAESTROS.exclusionesEstandar.filter(e => e.activo);
 
       // Texto de garantía adaptado con meses dinámicos
+      
+      // =======================================================================
+      // CONSTRUCCIÓN DE CARTA GANTT NATIVA PARA WORD
+      // =======================================================================
+      const semOfi = Math.max(1, Number(p.semanasOficina) || 1);
+      const semTerr = Math.max(1, Math.ceil((Number(p.diasTerreno) || 4) / 5));
+      const totalSemanasGantt = semOfi + semTerr;
+
+      const ganttHeaderCells = [
+        new TableCell({ width: { size: 8, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "ÍTEM", bold: true, color: "FFFFFF", size: 18 })] })], shading: { fill: "0F2744" } }),
+        new TableCell({ width: { size: 44, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "FASE / ACTIVIDAD DEL PROYECTO", bold: true, color: "FFFFFF", size: 18 })] })], shading: { fill: "0F2744" } }),
+        new TableCell({ width: { size: 16, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "MODALIDAD", bold: true, color: "FFFFFF", size: 18 })] })], shading: { fill: "0F2744" } }),
+        new TableCell({ width: { size: 12, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "DURACIÓN", bold: true, color: "FFFFFF", size: 18 })] })], shading: { fill: "0F2744" } })
+      ];
+
+      const semanaColPct = Math.max(3, Math.floor(20 / totalSemanasGantt));
+      for (let s = 1; s <= totalSemanasGantt; s++) {
+        ganttHeaderCells.push(
+          new TableCell({
+            width: { size: semanaColPct, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `S${s}`, bold: true, color: "FFFFFF", size: 18 })] })],
+            shading: { fill: "1B365D" }
+          })
+        );
+      }
+
+      const ganttFases = [
+        { item: "1.0", desc: "Ingeniería de Detalle y Planimetría", lugar: "Oficina KEV", dur: `${semOfi} Semanas`, start: 1, end: semOfi },
+        { item: "2.0", desc: "Programación PLC/SCADA y Pruebas FAT", lugar: "Oficina / Taller", dur: `${Math.min(2, semOfi)} Semanas`, start: Math.max(1, semOfi - 1), end: semOfi },
+        { item: "3.0", desc: "Montaje Eléctrico y Canalizaciones", lugar: "Terreno Faena", dur: `${p.diasTerreno || 4} Días`, start: semOfi + 1, end: totalSemanasGantt },
+        { item: "4.0", desc: "Puesta en Marcha (PEM) y Pruebas SAT", lugar: "Terreno Faena", dur: `${p.diasTerreno || 4} Días`, start: semOfi + 1, end: totalSemanasGantt },
+        { item: "5.0", desc: "Capacitación y Entrega Conforme", lugar: "Terreno Faena", dur: "1 Semana", start: totalSemanasGantt, end: totalSemanasGantt }
+      ];
+
+      const ganttTableRows = [
+        new TableRow({ children: ganttHeaderCells }),
+        ...ganttFases.map(fase => {
+          const cells = [
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fase.item, bold: true, size: 18 })] })] }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fase.desc, size: 18 })] })] }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fase.lugar, size: 18 })] })] }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: fase.dur, size: 18 })] })] })
+          ];
+          for (let s = 1; s <= totalSemanasGantt; s++) {
+            const activo = (s >= fase.start && s <= fase.end);
+            cells.push(
+              new TableCell({
+                alignment: AlignmentType.CENTER,
+                shading: activo ? { fill: "2563EB" } : undefined,
+                children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: activo ? "■" : "", bold: true, color: "FFFFFF", size: 16 })] })]
+              })
+            );
+          }
+          return new TableRow({ children: cells });
+        })
+      ];
+
+      const tablaGanttWord = new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: tableBorderDefault,
+        rows: ganttTableRows
+      });
+
       const basesLegalesAdaptadas = KEV_MAESTROS.basesLegalesGarantia.map(b => {
         if (b.titulo.includes("Vigencia")) {
           return {
