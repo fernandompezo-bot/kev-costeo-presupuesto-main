@@ -357,3 +357,132 @@ body {
   background: #f8fafc;
   border-radius: 0 0 12px 12px;
 }
+
+/* ==========================================================================
+   MEJORAS NIVEL 1 & 2: GANTT, DROPZONE, TOASTS, CONFIGURACIÓN
+   ========================================================================== */
+
+/* Mini Carta Gantt */
+.gantt-container {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.gantt-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.775rem;
+}
+
+.gantt-bar-track {
+  background: #f1f5f9;
+  height: 22px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gantt-bar {
+  position: absolute;
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  color: white;
+  font-weight: 700;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+}
+
+.gantt-bar-oficina { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+.gantt-bar-fat { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
+.gantt-bar-terreno { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.gantt-bar-cierre { background: linear-gradient(90deg, #059669, #10b981); }
+
+/* Dropzone de Importación */
+.dropzone {
+  border: 2px dashed #94a3b8;
+  border-radius: 10px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background: #0f2744;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: toastIn 0.25s forwards, toastOut 0.25s forwards 3.5s;
+}
+
+.toast.toast-success { border-left: 4px solid #10b981; }
+.toast.toast-warning { border-left: 4px solid #f59e0b; }
+.toast.toast-info { border-left: 4px solid #3b82f6; }
+
+@keyframes toastIn {
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+  to { transform: translateY(20px); opacity: 0; }
+}
+
+/* Badge de Auto-Guardado */
+.autosave-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.725rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+}
+
+.autosave-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+

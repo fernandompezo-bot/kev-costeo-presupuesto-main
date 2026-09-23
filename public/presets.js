@@ -99,6 +99,15 @@ const KEV_MAESTROS = {
     { ep: "EP-4", hito: "Entrega de Protocolos y Planos As-Built", porcentaje: 10 }
   ],
 
+  exclusionesEstandar: [
+    { id: "e1", texto: "No se incluye montaje mecánico o canalizaciones externas no especificadas.", activo: true },
+    { id: "e2", texto: "No se contempla integración o comunicación con otros sistemas de terceros no detallados.", activo: true },
+    { id: "e3", texto: "Cualquier equipo, licencia o insumo no especificado taxativamente en esta oferta.", activo: true },
+    { id: "e4", texto: "No incluye obras civiles, perforaciones mayores ni canalizados subterráneos.", activo: false },
+    { id: "e5", texto: "No considera suministro de energía provisional ni grupos generadores.", activo: false },
+    { id: "e6", texto: "No contempla traslados ni alojamiento de personal ajeno a KEV Process SpA.", activo: false }
+  ],
+
   basesLegalesGarantia: [
     {
       titulo: "1. Objeto y Cobertura de la Garantía",

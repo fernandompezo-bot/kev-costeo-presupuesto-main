@@ -65,31 +65,65 @@
       </button>
     </div>
 
-    <!-- ACCIONES Y EXPORTACIÓN -->
+    <!-- ESTADO DE AUTO-GUARDADO Y ACCIONES -->
     <div class="flex items-center gap-2">
+      <!-- Badge de Auto-Guardado -->
+      <div id="autoSaveIndicator" class="autosave-badge" title="Guardado automático local activo">
+        <div class="autosave-dot"></div>
+        <span id="autoSaveText">Auto-guardado</span>
+      </div>
+
       <!-- Selector de Presets -->
-      <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="text-xs py-1.5 px-2.5 rounded bg-slate-800 text-white border border-slate-600 focus:outline-none focus:border-blue-400">
-        <option value="101-2026">⚡ Preset: 101-2026 (Migración Sirius a Sinamics G120)</option>
-        <option value="061-2026">⚡ Preset: 061-2026 (Servicio Asistencia Terreno / PCS7)</option>
-        <option value="037-2026">⚡ Preset: 037-2026 (Suministro Hardware IPC)</option>
-        <option value="blanco">📄 Proyecto Nuevo en Blanco</option>
+      <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="text-xs py-1.5 px-2 rounded bg-slate-800 text-white border border-slate-600 focus:outline-none focus:border-blue-400">
+        <option value="101-2026">⚡ 101-2026 (Sirius a G120)</option>
+        <option value="061-2026">⚡ 061-2026 (Asistencia PCS7)</option>
+        <option value="037-2026">⚡ 037-2026 (Hardware IPC)</option>
+        <option value="blanco">📄 Proyecto en Blanco</option>
       </select>
+
+      <!-- Importar XLSX -->
+      <button onclick="app.abrirModalImportarXLSX()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Importar planilla XLSX existente">
+        <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-600"></i>
+        Importar XLSX
+      </button>
+
+      <!-- Guardar / Cargar JSON -->
+      <button onclick="app.exportarJSON()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Descargar borrador JSON">
+        <i data-lucide="save" class="w-3.5 h-3.5 text-blue-600"></i>
+        Guardar
+      </button>
+      <button onclick="document.getElementById('inputImportJSON').click()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Cargar borrador JSON">
+        <i data-lucide="folder-open" class="w-3.5 h-3.5 text-amber-600"></i>
+        Abrir
+      </button>
+      <input type="file" id="inputImportJSON" accept=".json" class="hidden" onchange="app.importarJSON(event)">
+
+      <!-- Copiar Resumen para Email -->
+      <button onclick="app.copiarResumenEmail()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Copiar resumen ejecutivo al portapapeles para enviar por email">
+        <i data-lucide="mail" class="w-3.5 h-3.5 text-indigo-600"></i>
+        Copiar Email
+      </button>
 
       <!-- Botón Exportar Excel -->
       <button onclick="app.exportarXLSX()" class="btn btn-success text-xs py-1.5 px-3" title="Genera planilla XLSX con formato y fórmulas exactas de 9 hojas">
         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-        Exportar XLSX
+        XLSX
       </button>
 
       <!-- Botón Exportar Word -->
       <button onclick="app.exportarDOCX()" class="btn btn-primary text-xs py-1.5 px-3" title="Genera propuesta técnico-comercial en Word con bases legales y garantías">
         <i data-lucide="file-text" class="w-4 h-4"></i>
-        Generar Word (.docx)
+        Word (.docx)
       </button>
 
       <!-- Botón Previsualizar Propuesta -->
-      <button onclick="app.abrirModalPrevisualizacion()" class="btn btn-secondary text-xs py-1.5 px-2.5" title="Ver texto de la propuesta">
+      <button onclick="app.abrirModalPrevisualizacion()" class="btn btn-secondary text-xs py-1.5 px-2" title="Previsualizar propuesta Word">
         <i data-lucide="eye" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Botón Configuración de Tarifas y Catálogo -->
+      <button onclick="app.abrirModalConfiguracion()" class="btn btn-secondary text-xs py-1.5 px-2" title="Configurar tarifas de HH, viáticos y catálogo personalizado">
+        <i data-lucide="settings" class="w-4 h-4 text-slate-700"></i>
       </button>
     </div>
   </header>
@@ -254,7 +288,21 @@
           </table>
         </div>
 
-        <div class="mt-3 flex justify-between items-center">
+        <!-- MINI CARTA GANTT VISUAL -->
+        <div class="mt-6 border-t pt-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider">
+              <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+              Cronograma Referencial de Hitos (Mini Carta Gantt)
+            </h3>
+            <span id="ganttResumenSemanas" class="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              Total: 2 semanas oficina + 4 días terreno
+            </span>
+          </div>
+          <div id="contenedorMiniGantt" class="gantt-container"></div>
+        </div>
+
+        <div class="mt-4 flex justify-between items-center">
           <button onclick="app.agregarFilaIngenieria()" class="btn btn-secondary text-xs">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Perfil de HH
           </button>
@@ -592,10 +640,51 @@
           </table>
         </div>
 
+        <!-- Parámetros de Garantía y Validez de Oferta -->
+        <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Parámetros de Garantía y Validez</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Vigencia de la Garantía Técnica</label>
+              <select id="q_mesesGarantia" onchange="app.actualizarDato('mesesGarantia', this.value)" class="w-full p-2 border rounded font-semibold text-slate-800">
+                <option value="6">6 Meses</option>
+                <option value="12" selected>12 Meses (Estándar KEV Process)</option>
+                <option value="18">18 Meses</option>
+                <option value="24">24 Meses (Garantía Extendida)</option>
+                <option value="36">36 Meses (Especial)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Validez de la Oferta</label>
+              <input type="text" id="q_validezOferta" value="30 días a contar de la fecha de emisión" onchange="app.actualizarDato('validezOferta', this.value)" class="w-full p-2 border rounded font-semibold text-slate-800">
+            </div>
+          </div>
+        </div>
+
+        <!-- Exclusiones Personalizables -->
+        <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              Exclusiones de la Oferta (Se imprimirán en el documento Word)
+            </h3>
+            <button onclick="app.agregarExclusionPersonalizada()" class="btn btn-secondary text-xs py-1 px-2">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Exclusión
+            </button>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Marque las exclusiones aplicables o agregue cláusulas personalizadas.</p>
+          <div id="contenedorExclusiones" class="space-y-2"></div>
+        </div>
+
+        <!-- Notas y Condiciones Contractuales Especiales -->
+        <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Notas y Condiciones Especiales</h3>
+          <textarea id="q_notasEspeciales" rows="3" placeholder="Ingrese notas o consideraciones adicionales para el cliente..." onchange="app.actualizarDato('notasEspeciales', this.value)" class="w-full p-2 border rounded text-xs"></textarea>
+        </div>
+
         <!-- Cláusulas Legales y de Garantía -->
         <div>
-          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Bases Legales, Contractuales y Cobertura de Garantía</h3>
-          <div class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Bases Legales, Contractuales y Cobertura de Garantía KEV Process</h3>
+          <div class="space-y-3 bg-white p-4 rounded-lg border border-slate-200 text-xs">
             <div id="contenedorBasesLegales" class="space-y-3"></div>
           </div>
         </div>
@@ -728,6 +817,121 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL DE IMPORTACIÓN DE PLANILLA EXCEL (XLSX) -->
+  <div id="modalImportarXLSX" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+          Importador Inteligente de Planillas Excel (.xlsx)
+        </h3>
+        <button onclick="app.cerrarModalImportarXLSX()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="modal-body space-y-4">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Arrastra o selecciona una planilla de costos de KEV Process (formato 2026 de 9 hojas). El sistema extraerá automáticamente el cliente, horas de ingeniería, tablas de equipos con descuentos Siemens, logística y viáticos.
+        </p>
+
+        <!-- Dropzone interactiva -->
+        <div id="dropzoneXLSX" class="dropzone" onclick="document.getElementById('inputXLSXFile').click()">
+          <i data-lucide="upload-cloud" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
+          <p class="text-xs font-bold text-slate-700">Arrastra tu archivo Excel (.xlsx) aquí</p>
+          <p class="text-xs text-slate-400 mt-1">o haz clic para explorar en tu equipo</p>
+        </div>
+        <input type="file" id="inputXLSXFile" accept=".xlsx" class="hidden" onchange="app.procesarArchivoXLSX(event)">
+
+        <div id="infoImportando" class="hidden p-3 bg-blue-50 text-blue-800 rounded text-xs flex items-center gap-2 font-semibold">
+          <i data-lucide="loader" class="w-4 h-4 animate-spin text-blue-600"></i>
+          <span>Analizando y cargando datos de la planilla...</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="app.cerrarModalImportarXLSX()" class="btn btn-secondary text-xs">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURACIÓN DE TARIFAS Y CATÁLOGO PERSONALIZADO -->
+  <div id="modalConfiguracion" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 850px;">
+      <div class="modal-header">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
+          Configuración de Tarifas y Catálogo Personalizado (Persistente)
+        </h3>
+        <button onclick="app.cerrarModalConfiguracion()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="modal-body space-y-4">
+        <!-- Selector de Pestaña de Configuración -->
+        <div class="flex gap-2 border-b pb-2 text-xs">
+          <button id="btnTabCfgHH" class="px-3 py-1 font-bold rounded bg-blue-100 text-blue-900" onclick="app.setTabConfig('hh')">
+            Tarifas de HH
+          </button>
+          <button id="btnTabCfgLogistica" class="px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700" onclick="app.setTabConfig('logistica')">
+            Tarifas Logística / Viáticos
+          </button>
+          <button id="btnTabCfgEquipos" class="px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700" onclick="app.setTabConfig('equipos')">
+            Catálogo de Equipos Frecuentes
+          </button>
+        </div>
+
+        <!-- Pestaña 1: Tarifas de HH -->
+        <div id="cfgPane_hh" class="space-y-3">
+          <p class="text-xs text-slate-500">Personaliza el valor unitario por hora estándar para cada especialidad técnica.</p>
+          <div id="cfgListaHH" class="space-y-2 text-xs"></div>
+        </div>
+
+        <!-- Pestaña 2: Tarifas Logística -->
+        <div id="cfgPane_logistica" class="space-y-3 hidden">
+          <p class="text-xs text-slate-500">Valores estándar de gastos de faena, hospedaje, alimentación y traslados.</p>
+          <div id="cfgListaLogistica" class="space-y-2 text-xs"></div>
+        </div>
+
+        <!-- Pestaña 3: Catálogo Personalizado -->
+        <div id="cfgPane_equipos" class="space-y-3 hidden">
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Agregue o modifique equipos frecuentes para el selector rápido.</p>
+            <button onclick="app.agregarEquipoACatalogo()" class="btn btn-secondary text-xs py-1 px-2">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo Equipo
+            </button>
+          </div>
+          <div class="overflow-x-auto max-h-64">
+            <table class="excel-table text-xs">
+              <thead>
+                <tr>
+                  <th>CÓDIGO</th>
+                  <th>DESCRIPCIÓN</th>
+                  <th style="width: 80px;">GRUPO</th>
+                  <th style="width: 100px;" class="text-right">LISTA USD</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="cfgTbodyEquipos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-between">
+        <button onclick="app.restablecerTarifasFabrica()" class="btn btn-secondary text-xs text-red-600 hover:text-red-700" title="Restablecer a valores de fábrica">
+          Restablecer Valores de Fábrica
+        </button>
+        <div class="flex gap-2">
+          <button onclick="app.cerrarModalConfiguracion()" class="btn btn-secondary text-xs">Cancelar</button>
+          <button onclick="app.guardarConfiguracionPersonalizada()" class="btn btn-primary text-xs">
+            <i data-lucide="check" class="w-4 h-4"></i> Guardar Configuración
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE TOAST NOTIFICATIONS -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts de la Aplicación -->
   <script src="presets.js"></script>

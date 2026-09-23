@@ -1,6 +1,7 @@
 /**
  * app.js - Motor Reactivo de Presupuesto, Costeo y Generador de Documentos XLSX/DOCX
  * KEV Process SpA - 2026
+ * Versión 2.0 - Con Auto-guardado, Importador XLSX, Gantt, Gestor de Tarifas y Exclusiones
  */
 
 class KEVPresupuestoApp {
@@ -8,17 +9,67 @@ class KEVPresupuestoApp {
     this.modo = 'cuestionario'; // 'cuestionario' | 'desarrollo'
     this.pasoCuestionario = 1;
     this.tabExcelActual = 'RESUMEN GENERAL';
+    this.tabConfigActual = 'hh';
+
+    // Cargar tarifas y catálogos personalizados desde localStorage
+    this.cargarConfiguracionUsuario();
 
     // Estado reactivo del proyecto
     this.proyecto = null;
-    this.cargarPreset('101-2026'); // Carga caso base 101-2026 por defecto
+    
+    // Si existe sesión guardada en localStorage, cargarla; si no, cargar preset base 101-2026
+    const guardado = localStorage.getItem('kev_proyecto_guardado');
+    if (guardado) {
+      try {
+        this.proyecto = JSON.parse(guardado);
+      } catch (e) {
+        console.warn("Error al restaurar sesión guardada:", e);
+      }
+    }
+    
+    if (!this.proyecto) {
+      this.cargarPreset('101-2026');
+    }
   }
 
   init() {
     this.inicializarSelectores();
+    this.inicializarDropzone();
     this.render();
     if (window.lucide) {
       lucide.createIcons();
+    }
+  }
+
+  // Carga configuración persistente de tarifas desde localStorage
+  cargarConfiguracionUsuario() {
+    try {
+      const cfgHH = localStorage.getItem('kev_cfg_tarifas_hh');
+      if (cfgHH) {
+        const parsed = JSON.parse(cfgHH);
+        Object.keys(parsed).forEach(k => {
+          if (KEV_MAESTROS.tarifasHH[k]) {
+            KEV_MAESTROS.tarifasHH[k].costoUnitario = parsed[k];
+          }
+        });
+      }
+
+      const cfgLog = localStorage.getItem('kev_cfg_tarifas_logistica');
+      if (cfgLog) {
+        const parsed = JSON.parse(cfgLog);
+        Object.keys(parsed).forEach(k => {
+          if (KEV_MAESTROS.tarifasLogisticas[k]) {
+            KEV_MAESTROS.tarifasLogisticas[k].costoUnitario = parsed[k];
+          }
+        });
+      }
+
+      const cfgEq = localStorage.getItem('kev_cfg_catalogo_equipos');
+      if (cfgEq) {
+        KEV_MAESTROS.catalogoEquiposFrecuentes = JSON.parse(cfgEq);
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar configuración de usuario:", e);
     }
   }
 
@@ -35,8 +86,11 @@ class KEVPresupuestoApp {
         uf: 40800,
         semanasOficina: 1,
         diasTerreno: 2,
+        mesesGarantia: "12",
+        validezOferta: "30 días a contar de la fecha de emisión",
+        notasEspeciales: "",
         ingenieria: [
-          { id: "1.4", perfil: "HH Ingeniero PLC", hh: 40, costoUnitario: 20000, comentario: "Programación inicial" }
+          { id: "1.4", perfil: "HH Ingeniero PLC", hh: 40, costoUnitario: KEV_MAESTROS.tarifasHH.plc.costoUnitario, comentario: "Programación inicial" }
         ],
         adicionales: [],
         integracionElectrica: [],
@@ -46,11 +100,12 @@ class KEVPresupuestoApp {
         ],
         montaje: [],
         otros: [
-          { item: "7.01", descripcion: "Estadía", unidad: "C/U", cantidad: 2, costoUnitario: 100000 },
-          { item: "7.02", descripcion: "Alimentación", unidad: "C/U", cantidad: 2, costoUnitario: 50000 }
+          { item: "7.01", descripcion: "Estadía", unidad: "C/U", cantidad: 2, costoUnitario: KEV_MAESTROS.tarifasLogisticas.estadia.costoUnitario },
+          { item: "7.02", descripcion: "Alimentación", unidad: "C/U", cantidad: 2, costoUnitario: KEV_MAESTROS.tarifasLogisticas.alimentacion.costoUnitario }
         ],
         margenes: { ...KEV_MAESTROS.margenesPorDefecto },
-        hitos: JSON.parse(JSON.stringify(KEV_MAESTROS.hitosPagoEstandar))
+        hitos: JSON.parse(JSON.stringify(KEV_MAESTROS.hitosPagoEstandar)),
+        exclusiones: JSON.parse(JSON.stringify(KEV_MAESTROS.exclusionesEstandar))
       };
     } else if (PRESETS_PROYECTOS[id]) {
       this.proyecto = JSON.parse(JSON.stringify(PRESETS_PROYECTOS[id]));
@@ -60,8 +115,21 @@ class KEVPresupuestoApp {
       if (!this.proyecto.adicionales) {
         this.proyecto.adicionales = [];
       }
+      if (!this.proyecto.exclusiones) {
+        this.proyecto.exclusiones = JSON.parse(JSON.stringify(KEV_MAESTROS.exclusionesEstandar));
+      }
+      if (!this.proyecto.mesesGarantia) {
+        this.proyecto.mesesGarantia = "12";
+      }
+      if (!this.proyecto.validezOferta) {
+        this.proyecto.validezOferta = "30 días a contar de la fecha de emisión";
+      }
+      if (!this.proyecto.notasEspeciales) {
+        this.proyecto.notasEspeciales = "";
+      }
     }
     this.render();
+    this.showToast("Preset cargado correctamente: " + (id === 'blanco' ? 'Proyecto en Blanco' : id), "info");
   }
 
   // Inicializa datalist de clientes y catálogo de equipos
@@ -78,6 +146,52 @@ class KEVPresupuestoApp {
       selectEquipo.innerHTML = KEV_MAESTROS.catalogoEquiposFrecuentes.map((eq, idx) => 
         `<option value="${idx}">[${eq.codigo}] ${eq.descripcion} (Lista: $${eq.listaUSD} USD / Grupo: ${eq.grupo})</option>`
       ).join('');
+    }
+  }
+
+  // Inicializa listeners para drag & drop en el modal de importación
+  inicializarDropzone() {
+    const dropzone = document.getElementById('dropzoneXLSX');
+    if (!dropzone) return;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length > 0) {
+        this.procesarArchivoXLSX({ target: { files: files } });
+      }
+    }, false);
+  }
+
+  // Auto-guardado en LocalStorage
+  autoSave() {
+    try {
+      if (this.proyecto) {
+        localStorage.setItem('kev_proyecto_guardado', JSON.stringify(this.proyecto));
+        const badge = document.getElementById('autoSaveText');
+        if (badge) {
+          const hora = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          badge.textContent = `Auto-guardado (${hora})`;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo auto-guardar en localStorage:", e);
     }
   }
 
@@ -231,6 +345,7 @@ class KEVPresupuestoApp {
   // =========================================================================
   render() {
     const p = this.proyecto;
+    if (!p) return;
     const calc = this.calcularTotales();
 
     // Actualizar KPI Bar
@@ -251,10 +366,11 @@ class KEVPresupuestoApp {
     this.setElemVal('inputDolar', p.dolar);
     this.setElemVal('inputUF', p.uf);
 
-    // Actualizar Paso 2 (HH)
+    // Actualizar Paso 2 (HH y Mini Carta Gantt)
     this.setElemText('q_totalHH', `${calc.totalHH} HH`);
     this.setElemText('q_costoIngenieria', this.fmtCLP(calc.costoIngenieria));
     this.renderTablaIngenieriaCuestionario();
+    this.renderMiniGantt();
 
     // Actualizar Paso 3 (Equipos)
     this.setElemText('q_totalEquiposCLP', this.fmtCLP(calc.costoEquipos));
@@ -280,16 +396,150 @@ class KEVPresupuestoApp {
     this.setElemText('resumenMargenGlobal', `${(calc.margenConsolidado * 100).toFixed(1)}%`);
     this.setElemText('resumenUtilidadBruta', this.fmtCLP(calc.precioTotalProyecto - calc.costoTotalProyecto));
 
-    // Actualizar Paso 7 (Hitos)
+    // Actualizar Paso 7 (Hitos, Exclusiones y Garantías)
     this.renderTablaHitosPago(calc.precioTotalProyecto);
+    this.renderExclusiones();
     this.renderBasesLegales();
+    this.setElemVal('q_mesesGarantia', p.mesesGarantia || '12');
+    this.setElemVal('q_validezOferta', p.validezOferta || '30 días a contar de la fecha de emisión');
+    this.setElemVal('q_notasEspeciales', p.notasEspeciales || '');
 
     // Si está en Modo Desarrollo, refrescar la grilla matricial
     if (this.modo === 'desarrollo') {
       this.renderModoDesarrollo();
     }
 
+    // Auto-guardado
+    this.autoSave();
+
     if (window.lucide) lucide.createIcons();
+  }
+
+  // --- RENDER MINI CARTA GANTT VISUAL ---
+  renderMiniGantt() {
+    const cont = document.getElementById('contenedorMiniGantt');
+    const lbl = document.getElementById('ganttResumenSemanas');
+    if (!cont) return;
+
+    const semanasOf = Math.max(1, Number(this.proyecto.semanasOficina) || 1);
+    const diasTerr = Math.max(1, Number(this.proyecto.diasTerreno) || 1);
+    const diasTotales = (semanasOf * 7) + diasTerr + 3; // +3 para cierre
+
+    if (lbl) {
+      lbl.textContent = `Total estimado: ${semanasOf} sem. oficina + ${diasTerr} días terreno`;
+    }
+
+    // Fases del proyecto calculadas
+    const fases = [
+      {
+        nombre: "1. Levantamiento & Planimetría",
+        clase: "gantt-bar-oficina",
+        inicioDia: 0,
+        duracionDia: Math.max(2, Math.round(semanasOf * 2.5)),
+        detalle: "Oficina"
+      },
+      {
+        nombre: "2. Desarrollo Lógicas PLC / SCADA",
+        clase: "gantt-bar-oficina",
+        inicioDia: Math.round(semanasOf * 2),
+        duracionDia: Math.round(semanasOf * 4.5),
+        detalle: "Oficina"
+      },
+      {
+        nombre: "3. Integración Tableros & Pruebas FAT",
+        clase: "gantt-bar-fat",
+        inicioDia: Math.round(semanasOf * 5),
+        duracionDia: Math.max(2, Math.round(semanasOf * 2)),
+        detalle: "Taller KEV"
+      },
+      {
+        nombre: "4. Desconexión & Montaje en Faena",
+        clase: "gantt-bar-terreno",
+        inicioDia: (semanasOf * 7),
+        duracionDia: Math.max(1, Math.round(diasTerr * 0.4)),
+        detalle: "Terreno"
+      },
+      {
+        nombre: "5. Comisionamiento & Puesta en Marcha (PEM)",
+        clase: "gantt-bar-terreno",
+        inicioDia: (semanasOf * 7) + Math.round(diasTerr * 0.35),
+        duracionDia: Math.max(2, Math.round(diasTerr * 0.65)),
+        detalle: "Terreno"
+      },
+      {
+        nombre: "6. Entrega As-Built & Protocolos",
+        clase: "gantt-bar-cierre",
+        inicioDia: (semanasOf * 7) + diasTerr,
+        duracionDia: 3,
+        detalle: "Cierre"
+      }
+    ];
+
+    cont.innerHTML = fases.map(f => {
+      const leftPct = Math.min(95, Math.max(0, (f.inicioDia / diasTotales) * 100));
+      const widthPct = Math.min(100 - leftPct, Math.max(5, (f.duracionDia / diasTotales) * 100));
+
+      return `
+        <div class="gantt-row">
+          <div class="font-bold text-slate-700 flex justify-between pr-2">
+            <span>${f.nombre}</span>
+            <span class="text-xs text-slate-400 font-normal">(${f.detalle})</span>
+          </div>
+          <div class="gantt-bar-track">
+            <div class="gantt-bar ${f.clase}" style="left: ${leftPct.toFixed(1)}%; width: ${widthPct.toFixed(1)}%;">
+              ${f.duracionDia}d
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // --- RENDER EXCLUSIONES INTERACTIVAS ---
+  renderExclusiones() {
+    const cont = document.getElementById('contenedorExclusiones');
+    if (!cont) return;
+
+    if (!this.proyecto.exclusiones || !Array.isArray(this.proyecto.exclusiones)) {
+      this.proyecto.exclusiones = JSON.parse(JSON.stringify(KEV_MAESTROS.exclusionesEstandar));
+    }
+
+    cont.innerHTML = this.proyecto.exclusiones.map((ex, idx) => `
+      <div class="flex items-center gap-2 p-1.5 bg-white border rounded text-xs hover:bg-slate-50">
+        <input type="checkbox" id="chkEx_${idx}" ${ex.activo ? 'checked' : ''} onchange="app.toggleExclusion(${idx})" class="w-4 h-4 text-blue-600 rounded">
+        <input type="text" value="${ex.texto}" onchange="app.actualizarTextoExclusion(${idx}, this.value)" class="flex-1 p-1 border-0 focus:ring-1 focus:ring-blue-500 rounded text-xs ${ex.activo ? 'font-semibold text-slate-800' : 'text-slate-400 line-through'}">
+        <button onclick="app.eliminarExclusion(${idx})" class="text-red-400 hover:text-red-600 p-1" title="Eliminar exclusión">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  toggleExclusion(idx) {
+    if (this.proyecto.exclusiones[idx]) {
+      this.proyecto.exclusiones[idx].activo = !this.proyecto.exclusiones[idx].activo;
+      this.render();
+    }
+  }
+
+  actualizarTextoExclusion(idx, val) {
+    if (this.proyecto.exclusiones[idx]) {
+      this.proyecto.exclusiones[idx].texto = val;
+      this.autoSave();
+    }
+  }
+
+  agregarExclusionPersonalizada() {
+    if (!this.proyecto.exclusiones) this.proyecto.exclusiones = [];
+    this.proyecto.exclusiones.push({
+      id: `custom_${Date.now()}`,
+      texto: "Nueva exclusión o delimitación de alcance...",
+      activo: true
+    });
+    this.render();
+  }
+
+  eliminarExclusion(idx) {
+    this.proyecto.exclusiones.splice(idx, 1);
+    this.render();
   }
 
   // --- RENDER TABLAS CUESTIONARIO ---
@@ -724,7 +974,6 @@ class KEVPresupuestoApp {
         </table>
       `;
     } else {
-      // Otros tabs genéricos (Flete, Montaje, Otros, Integración, Adicionales)
       let dataArray = [];
       if (nombreTab === 'Integración Eléctrica') dataArray = this.proyecto.integracionElectrica;
       else if (nombreTab === 'Flete') dataArray = this.proyecto.flete;
@@ -784,7 +1033,7 @@ class KEVPresupuestoApp {
       id: `1.${this.proyecto.ingenieria.length + 1}`,
       perfil: "Nuevo Perfil HH",
       hh: 20,
-      costoUnitario: 20000,
+      costoUnitario: KEV_MAESTROS.tarifasHH.plc.costoUnitario,
       comentario: ""
     });
     this.render();
@@ -832,6 +1081,7 @@ class KEVPresupuestoApp {
       costoCLP: catItem.costoCLP || 0
     });
     this.render();
+    this.showToast(`Equipo agregado: ${catItem.codigo}`, "success");
   }
 
   eliminarFilaEquipo(idx) {
@@ -917,6 +1167,471 @@ class KEVPresupuestoApp {
   }
 
   // =========================================================================
+  // GESTIÓN DE BORRADORES JSON (GUARDAR / ABRIR)
+  // =========================================================================
+  exportarJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.proyecto, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    const filename = `Proyecto_${this.proyecto.correlativo || 'BORRADOR'}.json`;
+    downloadAnchor.setAttribute("download", filename);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    this.showToast("Borrador JSON descargado", "success");
+  }
+
+  importarJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (parsed && parsed.correlativo && parsed.ingenieria) {
+          this.proyecto = parsed;
+          this.render();
+          this.showToast(`Proyecto importado: ${parsed.correlativo}`, "success");
+        } else {
+          alert("El archivo no tiene el formato de proyecto KEV válido.");
+        }
+      } catch (err) {
+        alert("Error al leer archivo JSON: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  // =========================================================================
+  // COPIAR RESUMEN PARA EMAIL AL PORTAPAPELES
+  // =========================================================================
+  copiarResumenEmail() {
+    const p = this.proyecto;
+    const calc = this.calcularTotales();
+
+    const hitosTexto = p.hitos.map(h => `  - ${h.ep} (${h.porcentaje}%): ${h.hito} -> ${this.fmtCLP(Math.round(calc.precioTotalProyecto * (h.porcentaje / 100)))}`).join('\n');
+
+    const texto = 
+`PROPUESTA TÉCNICO-COMERCIAL - KEV PROCESS SpA
+============================================================
+CLIENTE:      ${p.cliente} (${p.planta})
+CORRELATIVO:  ${p.correlativo}
+REQUERIMIENTO:${p.titulo}
+FECHA:        ${new Date().toLocaleDateString('es-CL')}
+
+1. PLAZOS Y CRONOGRAMA:
+   - Semanas en oficina (Ingeniería & Programación): ${p.semanasOficina} semanas
+   - Días en terreno (Montaje, Comisionamiento PEM):   ${p.diasTerreno} días
+
+2. CUADRO DE PRECIOS (VALORES NETOS + IVA):
+   - Suministro de Hardware e Insumos:  ${this.fmtCLP(calc.precioEquipos)}
+   - Servicios de Ingeniería & P&PEM:   ${this.fmtCLP(calc.precioTotalProyecto - calc.precioEquipos)}
+   ---------------------------------------------------------
+   PRECIO TOTAL NETO:                  ${this.fmtCLP(calc.precioTotalProyecto)} CLP
+   REFERENCIA EN USD (T/C $${p.dolar}):       $${calc.precioTotalUSD.toLocaleString('es-CL')} USD
+
+3. HITOS DE PAGO:
+${hitosTexto}
+
+4. CONDICIONES:
+   - Validez de la oferta: ${p.validezOferta || '30 días'}
+   - Garantía técnica:     ${p.mesesGarantia || '12'} meses desde la puesta en marcha
+   - Contacto:             ${KEV_MAESTROS.empresa.contacto} (${KEV_MAESTROS.empresa.movil})
+============================================================`;
+
+    navigator.clipboard.writeText(texto).then(() => {
+      this.showToast("¡Resumen ejecutivo copiado al portapapeles!", "success");
+    }).catch(err => {
+      alert("Error al copiar al portapapeles: " + err.message);
+    });
+  }
+
+  // =========================================================================
+  // IMPORTADOR INTELIGENTE DE PLANILLAS EXCEL (.XLSX) CON EXCELJS
+  // =========================================================================
+  abrirModalImportarXLSX() {
+    document.getElementById('modalImportarXLSX').classList.remove('hidden');
+    document.getElementById('infoImportando').classList.add('hidden');
+  }
+
+  cerrarModalImportarXLSX() {
+    document.getElementById('modalImportarXLSX').classList.add('hidden');
+  }
+
+  async procesarArchivoXLSX(event) {
+    const file = event.target.files ? event.target.files[0] : null;
+    if (!file) return;
+
+    const info = document.getElementById('infoImportando');
+    if (info) info.classList.remove('hidden');
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer);
+
+      // 1. Leer RESUMEN GENERAL
+      const wsResumen = wb.getWorksheet('RESUMEN GENERAL');
+      if (!wsResumen) {
+        throw new Error("La planilla no contiene la hoja 'RESUMEN GENERAL'. Verifique que corresponda al formato KEV Process.");
+      }
+
+      const cliente = wsResumen.getCell('D5').text || wsResumen.getCell('D5').value || 'CLIENTE IMPORTADO';
+      const correlativo = wsResumen.getCell('D6').text || wsResumen.getCell('D6').value || '000-2026';
+      const titulo = wsResumen.getCell('D7').text || wsResumen.getCell('D7').value || file.name.replace('.xlsx', '');
+      const dolarVal = Number(wsResumen.getCell('H24').value) || 950;
+      const ufVal = Number(wsResumen.getCell('H25').value) || 40800;
+
+      // Leer márgenes
+      const mIng = Number(wsResumen.getCell('E13').value) || 0.55;
+      const mAdic = Number(wsResumen.getCell('E14').value) || 0.30;
+      const mInt = Number(wsResumen.getCell('E15').value) || 0.55;
+      const mEq = Number(wsResumen.getCell('E16').value) || 0.30;
+      const mFl = Number(wsResumen.getCell('E17').value) || 0.10;
+      const mMo = Number(wsResumen.getCell('E18').value) || 0.30;
+      const mOt = Number(wsResumen.getCell('E19').value) || 0.10;
+
+      // 2. Leer Ingeniería y Planificación
+      const wsIng = wb.getWorksheet('Ingeniería y Planificación');
+      const ingList = [];
+      if (wsIng) {
+        for (let r = 8; r <= 30; r++) {
+          const item = wsIng.getCell(`B${r}`).text || wsIng.getCell(`B${r}`).value;
+          const desc = wsIng.getCell(`C${r}`).text || wsIng.getCell(`C${r}`).value;
+          const hh = Number(wsIng.getCell(`E${r}`).value) || 0;
+          const cu = Number(wsIng.getCell(`F${r}`).value) || 0;
+          const obs = wsIng.getCell(`H${r}`).text || wsIng.getCell(`H${r}`).value || '';
+
+          if (desc && (hh > 0 || cu > 0)) {
+            ingList.push({
+              id: String(item || `1.${ingList.length + 1}`),
+              perfil: String(desc),
+              hh: hh,
+              costoUnitario: cu,
+              comentario: String(obs)
+            });
+          }
+        }
+      }
+
+      // 3. Leer Equipos
+      const wsEq = wb.getWorksheet('Equipos');
+      const eqList = [];
+      if (wsEq) {
+        for (let r = 8; r <= 40; r++) {
+          const item = wsEq.getCell(`B${r}`).text || wsEq.getCell(`B${r}`).value;
+          const cod = wsEq.getCell(`C${r}`).text || wsEq.getCell(`C${r}`).value || '';
+          const desc = wsEq.getCell(`D${r}`).text || wsEq.getCell(`D${r}`).value;
+          const grupo = wsEq.getCell(`E${r}`).text || wsEq.getCell(`E${r}`).value || 'XG';
+          const lista = Number(wsEq.getCell(`F${r}`).value) || 0;
+          const cant = Number(wsEq.getCell(`H${r}`).value) || 0;
+          const cuCLP = Number(wsEq.getCell(`J${r}`).value) || 0;
+
+          if (desc && (cant > 0 || lista > 0 || cuCLP > 0)) {
+            eqList.push({
+              item: String(item || `4.${String(eqList.length + 1).padStart(2, '0')}`),
+              codigo: String(cod),
+              descripcion: String(desc),
+              grupo: String(grupo).trim() || 'XG',
+              listaUSD: lista,
+              unidad: 'CU',
+              cantidad: cant,
+              costoCLP: lista === 0 ? cuCLP : 0
+            });
+          }
+        }
+      }
+
+      // 4. Leer Integración Eléctrica
+      const wsInt = wb.getWorksheet('Integración Eléctrica');
+      const intList = [];
+      if (wsInt) {
+        for (let r = 8; r <= 25; r++) {
+          const item = wsInt.getCell(`B${r}`).text || wsInt.getCell(`B${r}`).value;
+          const desc = wsInt.getCell(`C${r}`).text || wsInt.getCell(`C${r}`).value;
+          const unid = wsInt.getCell(`D${r}`).text || wsInt.getCell(`D${r}`).value || 'HH';
+          const cant = Number(wsInt.getCell(`E${r}`).value) || 0;
+          const cu = Number(wsInt.getCell(`F${r}`).value) || 0;
+
+          if (desc && (cant > 0 || cu > 0)) {
+            intList.push({
+              id: String(item || `3.${String(intList.length + 1).padStart(2, '0')}`),
+              descripcion: String(desc),
+              unidad: String(unid),
+              cantidad: cant,
+              costoUnitario: cu
+            });
+          }
+        }
+      }
+
+      // 5. Leer Otros (Viáticos)
+      const wsOt = wb.getWorksheet('Otros');
+      const otList = [];
+      if (wsOt) {
+        for (let r = 8; r <= 25; r++) {
+          const item = wsOt.getCell(`B${r}`).text || wsOt.getCell(`B${r}`).value;
+          const desc = wsOt.getCell(`C${r}`).text || wsOt.getCell(`C${r}`).value;
+          const unid = wsOt.getCell(`D${r}`).text || wsOt.getCell(`D${r}`).value || 'C/U';
+          const cant = Number(wsOt.getCell(`E${r}`).value) || 0;
+          const cu = Number(wsOt.getCell(`F${r}`).value) || 0;
+
+          if (desc && (cant > 0 || cu > 0)) {
+            otList.push({
+              item: String(item || `7.${String(otList.length + 1).padStart(2, '0')}`),
+              descripcion: String(desc),
+              unidad: String(unid),
+              cantidad: cant,
+              costoUnitario: cu
+            });
+          }
+        }
+      }
+
+      // 6. Leer Flete
+      const wsFl = wb.getWorksheet('Flete');
+      const flList = [];
+      if (wsFl) {
+        for (let r = 8; r <= 15; r++) {
+          const item = wsFl.getCell(`B${r}`).text || wsFl.getCell(`B${r}`).value;
+          const desc = wsFl.getCell(`C${r}`).text || wsFl.getCell(`C${r}`).value;
+          const cant = Number(wsFl.getCell(`E${r}`).value) || 0;
+          const cu = Number(wsFl.getCell(`F${r}`).value) || 0;
+          if (desc && (cant > 0 || cu > 0)) {
+            flList.push({ item: String(item || '5.01'), descripcion: String(desc), unidad: 'C/U', cantidad: cant, costoUnitario: cu });
+          }
+        }
+      }
+
+      // Actualizar estado del proyecto
+      this.proyecto = {
+        cliente: String(cliente),
+        planta: "Planta Principal",
+        correlativo: String(correlativo),
+        titulo: String(titulo),
+        contactoCliente: "Estimados Señores",
+        dolar: dolarVal,
+        uf: ufVal,
+        semanasOficina: 2,
+        diasTerreno: 4,
+        mesesGarantia: "12",
+        validezOferta: "30 días a contar de fecha de hoy",
+        notasEspeciales: "",
+        ingenieria: ingList.length > 0 ? ingList : JSON.parse(JSON.stringify(PRESETS_PROYECTOS['101-2026'].ingenieria)),
+        adicionales: [],
+        integracionElectrica: intList.length > 0 ? intList : JSON.parse(JSON.stringify(PRESETS_PROYECTOS['101-2026'].integracionElectrica)),
+        equipos: eqList.length > 0 ? eqList : JSON.parse(JSON.stringify(PRESETS_PROYECTOS['101-2026'].equipos)),
+        flete: flList.length > 0 ? flList : JSON.parse(JSON.stringify(PRESETS_PROYECTOS['101-2026'].flete)),
+        montaje: [],
+        otros: otList.length > 0 ? otList : JSON.parse(JSON.stringify(PRESETS_PROYECTOS['101-2026'].otros)),
+        margenes: {
+          ingenieria: mIng,
+          adicionales: mAdic,
+          integracion: mInt,
+          equipos: mEq,
+          flete: mFl,
+          montaje: mMo,
+          otros: mOt
+        },
+        hitos: JSON.parse(JSON.stringify(KEV_MAESTROS.hitosPagoEstandar)),
+        exclusiones: JSON.parse(JSON.stringify(KEV_MAESTROS.exclusionesEstandar))
+      };
+
+      this.render();
+      this.cerrarModalImportarXLSX();
+      this.showToast(`¡Planilla importada exitosamente! (${correlativo})`, "success");
+
+    } catch (err) {
+      console.error("Error al importar XLSX:", err);
+      alert("Error al importar la planilla: " + err.message);
+    } finally {
+      if (info) info.classList.add('hidden');
+    }
+  }
+
+  // =========================================================================
+  // GESTOR DE CONFIGURACIÓN Y TARIFAS PERSONALIZADAS
+  // =========================================================================
+  abrirModalConfiguracion() {
+    this.renderConfiguracion();
+    document.getElementById('modalConfiguracion').classList.remove('hidden');
+  }
+
+  cerrarModalConfiguracion() {
+    document.getElementById('modalConfiguracion').classList.add('hidden');
+  }
+
+  setTabConfig(tab) {
+    this.tabConfigActual = tab;
+    ['hh', 'logistica', 'equipos'].forEach(t => {
+      const btn = document.getElementById(`btnTabCfg${t.charAt(0).toUpperCase() + t.slice(1)}`);
+      const pane = document.getElementById(`cfgPane_${t}`);
+      if (btn && pane) {
+        if (t === tab) {
+          btn.className = "px-3 py-1 font-bold rounded bg-blue-100 text-blue-900";
+          pane.classList.remove('hidden');
+        } else {
+          btn.className = "px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700";
+          pane.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  renderConfiguracion() {
+    // 1. Lista HH
+    const contHH = document.getElementById('cfgListaHH');
+    if (contHH) {
+      contHH.innerHTML = Object.keys(KEV_MAESTROS.tarifasHH).map(k => {
+        const item = KEV_MAESTROS.tarifasHH[k];
+        return `
+          <div class="flex items-center justify-between p-2 bg-slate-50 border rounded">
+            <span class="font-bold text-slate-800">${item.nombre}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-slate-500 font-semibold">$</span>
+              <input type="number" id="cfg_hh_${k}" value="${item.costoUnitario}" step="500" class="w-32 p-1 border rounded font-mono font-bold text-right">
+              <span class="text-slate-500 font-semibold">/ HH</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 2. Lista Logística
+    const contLog = document.getElementById('cfgListaLogistica');
+    if (contLog) {
+      contLog.innerHTML = Object.keys(KEV_MAESTROS.tarifasLogisticas).map(k => {
+        const item = KEV_MAESTROS.tarifasLogisticas[k];
+        return `
+          <div class="flex items-center justify-between p-2 bg-slate-50 border rounded">
+            <span class="font-bold text-slate-800">${item.nombre}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-slate-500 font-semibold">$</span>
+              <input type="number" id="cfg_log_${k}" value="${item.costoUnitario}" step="5000" class="w-32 p-1 border rounded font-mono font-bold text-right">
+              <span class="text-slate-500 font-semibold">${item.unidad}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 3. Catálogo Equipos
+    const tbodyEq = document.getElementById('cfgTbodyEquipos');
+    if (tbodyEq) {
+      tbodyEq.innerHTML = KEV_MAESTROS.catalogoEquiposFrecuentes.map((eq, idx) => `
+        <tr>
+          <td><input type="text" value="${eq.codigo}" id="cfg_eq_cod_${idx}" class="font-mono text-xs"></td>
+          <td><input type="text" value="${eq.descripcion}" id="cfg_eq_desc_${idx}" class="text-xs"></td>
+          <td><input type="text" value="${eq.grupo}" id="cfg_eq_grp_${idx}" class="text-center font-mono text-xs"></td>
+          <td><input type="number" value="${eq.listaUSD || 0}" step="0.01" id="cfg_eq_usd_${idx}" class="text-right font-mono text-xs"></td>
+          <td class="text-center">
+            <button onclick="app.eliminarEquipoDeCatalogo(${idx})" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  agregarEquipoACatalogo() {
+    KEV_MAESTROS.catalogoEquiposFrecuentes.unshift({
+      codigo: "NUEVO-CODIGO",
+      descripcion: "Descripción de equipo frecuente",
+      grupo: "XG",
+      listaUSD: 500,
+      unidad: "CU"
+    });
+    this.renderConfiguracion();
+  }
+
+  eliminarEquipoDeCatalogo(idx) {
+    KEV_MAESTROS.catalogoEquiposFrecuentes.splice(idx, 1);
+    this.renderConfiguracion();
+  }
+
+  guardarConfiguracionPersonalizada() {
+    // Guardar HH
+    const cfgHH = {};
+    Object.keys(KEV_MAESTROS.tarifasHH).forEach(k => {
+      const el = document.getElementById(`cfg_hh_${k}`);
+      if (el) {
+        const val = Number(el.value) || KEV_MAESTROS.tarifasHH[k].costoUnitario;
+        KEV_MAESTROS.tarifasHH[k].costoUnitario = val;
+        cfgHH[k] = val;
+      }
+    });
+    localStorage.setItem('kev_cfg_tarifas_hh', JSON.stringify(cfgHH));
+
+    // Guardar Logística
+    const cfgLog = {};
+    Object.keys(KEV_MAESTROS.tarifasLogisticas).forEach(k => {
+      const el = document.getElementById(`cfg_log_${k}`);
+      if (el) {
+        const val = Number(el.value) || KEV_MAESTROS.tarifasLogisticas[k].costoUnitario;
+        KEV_MAESTROS.tarifasLogisticas[k].costoUnitario = val;
+        cfgLog[k] = val;
+      }
+    });
+    localStorage.setItem('kev_cfg_tarifas_logistica', JSON.stringify(cfgLog));
+
+    // Guardar Catálogo Equipos
+    KEV_MAESTROS.catalogoEquiposFrecuentes.forEach((eq, idx) => {
+      const elCod = document.getElementById(`cfg_eq_cod_${idx}`);
+      const elDesc = document.getElementById(`cfg_eq_desc_${idx}`);
+      const elGrp = document.getElementById(`cfg_eq_grp_${idx}`);
+      const elUSD = document.getElementById(`cfg_eq_usd_${idx}`);
+      if (elCod) eq.codigo = elCod.value;
+      if (elDesc) eq.descripcion = elDesc.value;
+      if (elGrp) eq.grupo = elGrp.value;
+      if (elUSD) eq.listaUSD = Number(elUSD.value) || 0;
+    });
+    localStorage.setItem('kev_cfg_catalogo_equipos', JSON.stringify(KEV_MAESTROS.catalogoEquiposFrecuentes));
+
+    this.inicializarSelectores();
+    this.cerrarModalConfiguracion();
+    this.showToast("Configuración personalizada guardada con éxito", "success");
+  }
+
+  restablecerTarifasFabrica() {
+    if (confirm("¿Desea restablecer todas las tarifas y catálogo a los valores predeterminados de fábrica?")) {
+      localStorage.removeItem('kev_cfg_tarifas_hh');
+      localStorage.removeItem('kev_cfg_tarifas_logistica');
+      localStorage.removeItem('kev_cfg_catalogo_equipos');
+      location.reload();
+    }
+  }
+
+  // =========================================================================
+  // TOAST NOTIFICATIONS HELPER
+  // =========================================================================
+  showToast(mensaje, tipo = 'success') {
+    const cont = document.getElementById('toastContainer');
+    if (!cont) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${tipo}`;
+    
+    let iconName = 'check-circle';
+    if (tipo === 'warning') iconName = 'alert-triangle';
+    if (tipo === 'info') iconName = 'info';
+
+    toast.innerHTML = `
+      <i data-lucide="${iconName}" class="w-4 h-4"></i>
+      <span>${mensaje}</span>
+    `;
+
+    cont.appendChild(toast);
+    if (window.lucide) lucide.createIcons();
+
+    setTimeout(() => {
+      if (toast && toast.parentNode) {
+        toast.remove();
+      }
+    }, 4000);
+  }
+
+  // =========================================================================
   // EXPORTACIÓN A EXCEL (.XLSX) CON EXCELJS
   // =========================================================================
   async exportarXLSX() {
@@ -930,7 +1645,6 @@ class KEVPresupuestoApp {
 
       const azulOscuro = { argb: 'FF0F2744' };
       const azulMedio = { argb: 'FF1B365D' };
-      const grisClaro = { argb: 'FFF1F5F9' };
       const fontHeader = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
       const fontRegular = { name: 'Calibri', size: 10 };
       const borderThin = {
@@ -959,7 +1673,6 @@ class KEVPresupuestoApp {
       wsResumen.getCell('B10').value = 'RESUMEN DE COSTOS';
       wsResumen.getCell('B10').font = { bold: true, size: 11, color: azulOscuro };
 
-      // Encabezados Resumen
       const rHeaders = ['ITEM', 'DESCRIPCIÓN', 'COSTO TOTAL', 'MARGEN', 'PRECIO', 'PRECIO USD'];
       rHeaders.forEach((h, i) => {
         const c = wsResumen.getCell(12, i + 2);
@@ -969,15 +1682,14 @@ class KEVPresupuestoApp {
         c.alignment = { horizontal: i >= 2 ? 'right' : 'left' };
       });
 
-      // Filas de Resumen General
       const itemsResumen = [
-        { item: '1,0', desc: 'Ingeniería y planificaci\u00f3n', refSheet: "'Ingeniería y Planificación'!G20", cost: calc.costoIngenieria, m: p.margenes.ingenieria },
-        { item: '2,0', desc: 'Adicionales', refSheet: "'Adicionales'!G20", cost: calc.costoAdicionales, m: p.margenes.adicionales },
-        { item: '3,0', desc: 'Integración Eléctrica', refSheet: "'Integración Eléctrica'!G18", cost: calc.costoIntegracion, m: p.margenes.integracion },
-        { item: '4,0', desc: 'Equipos', refSheet: "'Equipos'!G30", cost: calc.costoEquipos, m: p.margenes.equipos },
-        { item: '5,0', desc: 'Flete', refSheet: "'Flete'!G14", cost: calc.costoFlete, m: p.margenes.flete },
-        { item: '6,0', desc: 'Montaje y Puesta en Marcha', refSheet: "'Montaje'!G17", cost: calc.costoMontaje, m: p.margenes.montaje },
-        { item: '7,0', desc: 'Otros: Viajes, visitas a terreno, levantamientos', refSheet: "'Otros'!G16", cost: calc.costoOtros, m: p.margenes.otros }
+        { item: '1,0', desc: 'Ingeniería y planificación', cost: calc.costoIngenieria, m: p.margenes.ingenieria },
+        { item: '2,0', desc: 'Adicionales', cost: calc.costoAdicionales, m: p.margenes.adicionales },
+        { item: '3,0', desc: 'Integración Eléctrica', cost: calc.costoIntegracion, m: p.margenes.integracion },
+        { item: '4,0', desc: 'Equipos', cost: calc.costoEquipos, m: p.margenes.equipos },
+        { item: '5,0', desc: 'Flete', cost: calc.costoFlete, m: p.margenes.flete },
+        { item: '6,0', desc: 'Montaje y Puesta en Marcha', cost: calc.costoMontaje, m: p.margenes.montaje },
+        { item: '7,0', desc: 'Otros: Viajes, visitas a terreno, levantamientos', cost: calc.costoOtros, m: p.margenes.otros }
       ];
 
       itemsResumen.forEach((it, idx) => {
@@ -1217,6 +1929,7 @@ class KEVPresupuestoApp {
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const filename = `Costos - ${p.correlativo} - ${p.titulo.replace(/[\/\\?%*:|"<>]/g, '_')}.xlsx`;
       saveAs(blob, filename);
+      this.showToast("Planilla XLSX generada con éxito", "success");
 
     } catch (err) {
       console.error("Error al exportar XLSX:", err);
@@ -1239,19 +1952,28 @@ class KEVPresupuestoApp {
 
       const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } = docxLib;
 
-      const borderNone = {
-        top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-        right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }
-      };
-
       const tableBorderDefault = {
         top: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
         bottom: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
         left: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
         right: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" }
       };
+
+      // Filtrar solo exclusiones activas
+      const exclusionesActivas = (p.exclusiones && Array.isArray(p.exclusiones))
+        ? p.exclusiones.filter(e => e.activo)
+        : KEV_MAESTROS.exclusionesEstandar.filter(e => e.activo);
+
+      // Texto de garantía adaptado con meses dinámicos
+      const basesLegalesAdaptadas = KEV_MAESTROS.basesLegalesGarantia.map(b => {
+        if (b.titulo.includes("Vigencia")) {
+          return {
+            titulo: b.titulo,
+            texto: `La garantía técnica tiene una vigencia de ${p.mesesGarantia || 12} meses a contar de la firma del acta de comisionamiento formal y entrega de documentación conforme.`
+          };
+        }
+        return b;
+      });
 
       const doc = new Document({
         styles: {
@@ -1403,9 +2125,7 @@ class KEVPresupuestoApp {
             new Paragraph({ text: "• Planos red-line actualizados conforme a la implementación realizada.", spacing: { after: 150 } }),
 
             new Paragraph({ children: [new TextRun({ text: "Exclusiones de la Oferta:", bold: true })] }),
-            new Paragraph({ text: "• No se incluye montaje mecánico o canalizaciones externas no especificadas." }),
-            new Paragraph({ text: "• No se contempla integración a sistemas de terceros no detallados." }),
-            new Paragraph({ text: "• Cualquier equipo o insumo no especificado en el presente documento.", spacing: { after: 200 } }),
+            ...exclusionesActivas.map(ex => new Paragraph({ text: `• ${ex.texto}` })),
 
             // 7. CUADRO DE PRECIOS
             new Paragraph({
@@ -1479,13 +2199,26 @@ class KEVPresupuestoApp {
               ]
             }),
 
+            // NOTAS ESPECIALES SI EXISTEN
+            ...(p.notasEspeciales ? [
+              new Paragraph({
+                text: "Notas Especiales:",
+                bold: true,
+                spacing: { before: 150, after: 60 }
+              }),
+              new Paragraph({
+                text: p.notasEspeciales,
+                spacing: { after: 150 }
+              })
+            ] : []),
+
             // 9. BASES LEGALES Y GARANTÍA
             new Paragraph({
               text: "9. Bases Legales, Contractuales y Garantía KEV Process",
               heading: HeadingLevel.HEADING_1,
               spacing: { before: 250, after: 120 }
             }),
-            ...KEV_MAESTROS.basesLegalesGarantia.flatMap(b => [
+            ...basesLegalesAdaptadas.flatMap(b => [
               new Paragraph({ children: [new TextRun({ text: b.titulo, bold: true })] }),
               new Paragraph({ children: [new TextRun({ text: b.texto })], spacing: { after: 120 } })
             ]),
@@ -1518,6 +2251,7 @@ class KEVPresupuestoApp {
       const buffer = await Packer.toBlob(doc);
       const filename = `${p.correlativo} - ${p.titulo.replace(/[\/\\?%*:|"<>]/g, '_')}.docx`;
       saveAs(buffer, filename);
+      this.showToast("Propuesta Word generada con éxito", "success");
 
     } catch (err) {
       console.error("Error al exportar DOCX:", err);
@@ -1532,6 +2266,10 @@ class KEVPresupuestoApp {
     const p = this.proyecto;
     const calc = this.calcularTotales();
 
+    const exclusionesActivas = (p.exclusiones && Array.isArray(p.exclusiones))
+      ? p.exclusiones.filter(e => e.activo)
+      : KEV_MAESTROS.exclusionesEstandar.filter(e => e.activo);
+
     cuerpo.innerHTML = `
       <div class="border-b pb-4 mb-4">
         <div class="text-right text-slate-500">${KEV_MAESTROS.empresa.ciudad}, ${new Date().toLocaleDateString('es-CL')}</div>
@@ -1544,7 +2282,7 @@ class KEVPresupuestoApp {
 
       <div class="space-y-4">
         <div>
-          <h4 class="font-bold text-slate-800 text-sm">1. Propuesta Técnica</h4>
+          <h4 class="font-bold text-slate-800 text-sm">1. Propuesta Técnica & Cronograma</h4>
           <p>Considera <strong>${p.semanasOficina} semanas en oficina</strong> para ingeniería y <strong>${p.diasTerreno} días en terreno</strong> para comisionamiento y pruebas PEM.</p>
         </div>
 
@@ -1565,7 +2303,21 @@ class KEVPresupuestoApp {
         </div>
 
         <div>
-          <h4 class="font-bold text-slate-800 text-sm">4. Bases Legales y Términos de Garantía</h4>
+          <h4 class="font-bold text-slate-800 text-sm">4. Exclusiones de la Oferta</h4>
+          <ul class="list-disc pl-5 space-y-1">
+            ${exclusionesActivas.map(ex => `<li>${ex.texto}</li>`).join('')}
+          </ul>
+        </div>
+
+        ${p.notasEspeciales ? `
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">5. Notas Especiales</h4>
+            <p class="text-xs text-slate-700">${p.notasEspeciales}</p>
+          </div>
+        ` : ''}
+
+        <div>
+          <h4 class="font-bold text-slate-800 text-sm">6. Bases Legales y Términos de Garantía (${p.mesesGarantia || '12'} Meses)</h4>
           <div class="text-xs text-slate-600 space-y-2 mt-1">
             ${KEV_MAESTROS.basesLegalesGarantia.map(b => `<p><strong>${b.titulo}:</strong> ${b.texto}</p>`).join('')}
           </div>
