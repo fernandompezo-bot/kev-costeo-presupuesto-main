@@ -1,0 +1,26 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@kevprocess.com",
+    "nombre": "Administración KEV",
+    "rol": "admin",
+    "salt": "salt_admin_kev",
+    "hash": "7390873e6a66023b4ec723a498a92fb687304f5366fc5c9a0c3afa8e564e0a9c561ef9de4e3668147165a3fc0a1ff0acd0c3c735e33177bcd4815ee05543b856"
+  },
+  {
+    "username": "ingenieria",
+    "email": "proyectos@kevprocess.com",
+    "nombre": "Ingeniería de Proyectos",
+    "rol": "ingeniero",
+    "salt": "salt_ing_kev",
+    "hash": "ebdf6677de487d969bcbff449cd4309e412fd0a5247d10b0cec4250feccf167bb31092d92ef998f1c52e8dad6951a9c37c33b1c7254442e5cfe7e8d075233fb9"
+  },
+  {
+    "username": "comercial",
+    "email": "comercial@kevprocess.com",
+    "nombre": "Ventas & Comercial",
+    "rol": "comercial",
+    "salt": "salt_com_kev",
+    "hash": "4ec8c87decdec0f3c75cbdafd4d2102922cf391c86afe06cd3ef317b7b09abcf7d0cbb58f28bac86856ebe39d4f80d350b758779b015302e2f6b1efa58ee14fa"
+  }
+]

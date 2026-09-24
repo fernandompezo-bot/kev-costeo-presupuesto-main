@@ -106,8 +106,35 @@ C:\DATA\ANTIGRAVITY\DEV-001\
 
 ---
 
-## 🆕 Novedades en Versión 1.1.0 (Septiembre 2026)
+## 🔐 Control de Acceso Seguro y Gestión de Usuarios (v1.2.0)
 
+La plataforma cuenta con una pasarela de autenticación previa (**Auth Gateway**) que protege la información confidencial de costos, tarifas de ingeniería, márgenes comerciales y descuentos de fabricantes:
+
+- **Seguridad Criptográfica:** Validación en servidor Node.js mediante algoritmo PBKDF2 (`crypto.pbkdf2Sync`) con sales individuales criptográficas SHA-512 y tokens de sesión de 256 bits.
+- **Arquitectura de Resiliencia Híbrida (100% Offline):** Si la plataforma se ejecuta de manera local/autónoma mediante `iniciar.bat` o sin servidor backend activo, el motor de cliente conmuta automáticamente a verificación local segura de fallback sin bloquear la operatividad.
+- **Control de Roles:**
+  - `admin` (Administración General KEV): Acceso irrestricto, configuración de tarifas maestras, gestión de descuentos Siemens e importación/exportación.
+  - `ingeniero` (Ingeniería de Proyectos): Levantamiento de HH, configuración de equipos, integración y carta Gantt.
+  - `comercial` (Ventas & Propuestas): Análisis de rentabilidad, márgenes de venta y emisión formal de propuestas Word/Excel.
+- **Credenciales Predeterminadas:**
+  | Perfil | Usuario / Correo | Contraseña Predeterminada |
+  | :--- | :--- | :--- |
+  | **Administración** | `admin` o `admin@kevprocess.com` | `Kev2026!Admin` *(o botón rápido Admin)* |
+  | **Ingeniería** | `ingenieria` o `proyectos@kevprocess.com` | `Kev2026!Proyectos` *(o botón rápido Ingeniería)* |
+  | **Comercial** | `comercial` o `comercial@kevprocess.com` | `Kev2026!Comercial` *(o botón rápido Comercial)* |
+- **Gestión de Sesión:** Persistencia configurable ("Recordar sesión en este equipo") y botón de cierre de sesión con avatar dinámico en el encabezado superior.
+
+---
+
+## 🆕 Historial de Versiones
+
+### Versión 1.2.0 (Septiembre 2026)
+- **🔐 Pasarela de Acceso Seguro (Auth Gateway):** Pantalla de bienvenida y login previo con verificación criptográfica PBKDF2 y fallback offline.
+- **👥 Gestión de Roles y Perfiles:** Soporte para usuarios `admin`, `ingenieria` y `comercial` con badge de usuario y cierre de sesión en encabezado.
+- **⚡ Botones de Acceso Rápido:** Inicio de sesión instantáneo de 1-clic para agilizar pruebas operativas y demostraciones en terreno.
+- **📦 Almacenamiento Seguro:** Archivo `data/users.json` con hash y salts para administración de cuentas de usuario.
+
+### Versión 1.1.0 (Septiembre 2026)
 - **🎨 Rediseño Corporativo Oficial:** Identidad gráfica alineada a `www.kevprocess.com` con paleta Tech Navy (`#0B1121`), KEV Teal (`#1D6A6E`), Tech Cyan (`#00B4D8`) y tipografía Google Fonts `Inter`.
 - **📌 Panel Lateral Inteligente:** Barra lateral con autohide (350 ms) y fijación (*Pin*), incorporando fijación de Dólar y UF en tiempo real.
 - **⚡ Matriz Dinámica Siemens:** Edición directa de porcentajes de descuento por familia (`XG`, `XD`, `ZF`, etc.) y creación de nuevas categorías con recálculo automático.

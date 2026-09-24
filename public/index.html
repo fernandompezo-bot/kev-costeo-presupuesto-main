@@ -57,6 +57,109 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
+  <!-- ====================================================================
+       PANTALLA DE ACCESO SEGURO / AUTH GATEWAY (KEV PROCESS SpA)
+       ==================================================================== -->
+  <div id="authScreen" class="auth-screen-overlay">
+    <div class="auth-card">
+      <!-- Logo y Encabezado de Login -->
+      <div class="text-center mb-6">
+        <div class="inline-flex bg-white px-3 py-1.5 rounded-lg shadow-sm mb-3">
+          <img src="logo.png" alt="KEV Process SpA" class="h-8 w-auto object-contain">
+        </div>
+        <h2 class="text-base font-extrabold text-white tracking-wide uppercase">Control de Acceso Seguro</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Sistema de Presupuestos & Costeo de Ingeniería</p>
+      </div>
+
+      <!-- Alerta de Error de Autenticación -->
+      <div id="authAlertError" class="hidden mb-4 p-2.5 rounded bg-red-950/80 border border-red-700/80 text-red-200 text-xs flex items-center gap-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0"></i>
+        <span id="authErrorMsg">Usuario o contraseña incorrectos.</span>
+      </div>
+
+      <!-- Formulario de Inicio de Sesión -->
+      <form id="formLogin" onsubmit="app.handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Usuario o Correo Corporativo</span>
+            <span class="text-cyan-400 text-[10px]">KEV Process</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </span>
+            <input type="text" id="loginUsername" required autocomplete="username"
+              placeholder="admin / ingenieria / comercial"
+              class="auth-input pl-9">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Contraseña</span>
+            <button type="button" onclick="app.toggleShowPassword()" class="text-[10px] text-cyan-400 hover:text-cyan-300 cursor-pointer">
+              <span id="lblTogglePass">Mostrar</span>
+            </button>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <input type="password" id="loginPassword" required autocomplete="current-password"
+              placeholder="••••••••••••"
+              class="auth-input pl-9 pr-9">
+            <button type="button" onclick="app.toggleShowPassword()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 cursor-pointer" title="Mostrar/Ocultar contraseña">
+              <i id="iconTogglePass" data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white select-none">
+            <input type="checkbox" id="loginRemember" class="w-3.5 h-3.5 rounded accent-teal-600">
+            <span class="text-[11px]">Recordar sesión en este equipo</span>
+          </label>
+          <span class="text-[10px] text-slate-500 font-mono">v1.2.0</span>
+        </div>
+
+        <button type="submit" id="btnSubmitLogin" class="btn-login-submit">
+          <span id="btnSubmitText">Ingresar a la Plataforma</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <!-- Botones de Acceso Rápido para Pruebas / Demostración -->
+      <div class="mt-6 pt-4 border-t border-slate-700/60">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">Perfiles de Acceso Rápido</p>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="app.fillQuickLogin('admin')" class="quick-login-btn">
+            <span class="font-bold text-cyan-400">Admin</span>
+            <span class="text-[9px] text-slate-400">Control Total</span>
+          </button>
+          <button type="button" onclick="app.fillQuickLogin('ingenieria')" class="quick-login-btn">
+            <span class="font-bold text-teal-400">Ingeniería</span>
+            <span class="text-[9px] text-slate-400">Costeo & HH</span>
+          </button>
+          <button type="button" onclick="app.fillQuickLogin('comercial')" class="quick-login-btn">
+            <span class="font-bold text-emerald-400">Comercial</span>
+            <span class="text-[9px] text-slate-400">Márgenes</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Estado de Conexión del Entorno -->
+      <div class="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
+        <span id="authEnvDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="authEnvStatus">Verificando entorno de ejecución...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       CONTENEDOR PRINCIPAL DE LA APLICACIÓN (PROTEGIDO TRAS LOGIN)
+       ==================================================================== -->
+  <div id="appContainerMain" class="hidden">
+
   <!-- BARRA DE NAVEGACIÓN SUPERIOR (LIMPIA CON INFORMACIÓN RELEVANTE) -->
   <header class="header-bar">
     <div class="flex items-center gap-3">
@@ -119,6 +222,18 @@
       <div id="autoSaveIndicator" class="autosave-badge" title="Guardado automático local activo">
         <div class="autosave-dot"></div>
         <span id="autoSaveText" class="hidden xl:inline">Guardado</span>
+      </div>
+
+      <!-- Perfil de Usuario Activo y Logout -->
+      <div id="userProfileBadge" class="user-profile-badge">
+        <div class="user-avatar" id="headerUserAvatar">AD</div>
+        <div class="hidden md:flex flex-col text-left">
+          <span id="headerUserName" class="text-xs font-bold leading-tight text-white">Administración KEV</span>
+          <span id="headerUserRole" class="text-[9px] text-cyan-400 font-semibold tracking-wider uppercase">ADMIN</span>
+        </div>
+        <button onclick="app.cerrarSesion()" class="p-1 text-slate-400 hover:text-red-400 transition cursor-pointer ml-1" title="Cerrar Sesión">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
       </div>
     </div>
   </header>
@@ -1187,6 +1302,7 @@
       </div>
     </div>
   </div>
+  </div><!-- FIN #appContainerMain -->
 
   <!-- CONTENEDOR DE TOAST NOTIFICATIONS -->
   <div id="toastContainer" class="toast-container"></div>
