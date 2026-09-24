@@ -128,27 +128,8 @@
         </button>
       </form>
 
-      <!-- Botones de Acceso Rápido para Pruebas / Demostración -->
-      <div class="mt-6 pt-4 border-t border-slate-700/60">
-        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">Perfiles de Acceso Rápido</p>
-        <div class="grid grid-cols-3 gap-2">
-          <button type="button" onclick="app.fillQuickLogin('admin')" class="quick-login-btn">
-            <span class="font-bold text-cyan-400">Admin</span>
-            <span class="text-[9px] text-slate-400">Control Total</span>
-          </button>
-          <button type="button" onclick="app.fillQuickLogin('ingenieria')" class="quick-login-btn">
-            <span class="font-bold text-teal-400">Ingeniería</span>
-            <span class="text-[9px] text-slate-400">Costeo & HH</span>
-          </button>
-          <button type="button" onclick="app.fillQuickLogin('comercial')" class="quick-login-btn">
-            <span class="font-bold text-emerald-400">Comercial</span>
-            <span class="text-[9px] text-slate-400">Márgenes</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Estado de Conexión del Entorno -->
-      <div class="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
+      <div class="mt-5 pt-3 border-t border-slate-700/60 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
         <span id="authEnvDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
         <span id="authEnvStatus">Verificando entorno de ejecución...</span>
       </div>

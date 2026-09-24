@@ -119,9 +119,9 @@ La plataforma cuenta con una pasarela de autenticación previa (**Auth Gateway**
 - **Credenciales Predeterminadas:**
   | Perfil | Usuario / Correo | Contraseña Predeterminada |
   | :--- | :--- | :--- |
-  | **Administración** | `admin` o `admin@kevprocess.com` | `Kev2026!Admin` *(o botón rápido Admin)* |
-  | **Ingeniería** | `ingenieria` o `proyectos@kevprocess.com` | `Kev2026!Proyectos` *(o botón rápido Ingeniería)* |
-  | **Comercial** | `comercial` o `comercial@kevprocess.com` | `Kev2026!Comercial` *(o botón rápido Comercial)* |
+  | **Administración** | `admin` o `admin@kevprocess.com` | `Kev2026!Admin` |
+  | **Ingeniería** | `ingenieria` o `proyectos@kevprocess.com` | `Kev2026!Proyectos` |
+  | **Comercial** | `comercial` o `comercial@kevprocess.com` | `Kev2026!Comercial` |
 - **Gestión de Sesión:** Persistencia configurable ("Recordar sesión en este equipo") y botón de cierre de sesión con avatar dinámico en el encabezado superior.
 
 ---
@@ -131,7 +131,7 @@ La plataforma cuenta con una pasarela de autenticación previa (**Auth Gateway**
 ### Versión 1.2.0 (Septiembre 2026)
 - **🔐 Pasarela de Acceso Seguro (Auth Gateway):** Pantalla de bienvenida y login previo con verificación criptográfica PBKDF2 y fallback offline.
 - **👥 Gestión de Roles y Perfiles:** Soporte para usuarios `admin`, `ingenieria` y `comercial` con badge de usuario y cierre de sesión en encabezado.
-- **⚡ Botones de Acceso Rápido:** Inicio de sesión instantáneo de 1-clic para agilizar pruebas operativas y demostraciones en terreno.
+- **🔒 Ingreso Estricto de Credenciales:** Autenticación manual obligatoria para cada perfil de usuario sin atajos ni autocompletado en pantalla.
 - **📦 Almacenamiento Seguro:** Archivo `data/users.json` con hash y salts para administración de cuentas de usuario.
 
 ### Versión 1.1.0 (Septiembre 2026)

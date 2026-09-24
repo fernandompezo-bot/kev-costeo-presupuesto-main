@@ -187,25 +187,6 @@ class KEVPresupuestoApp {
     if (window.lucide) lucide.createIcons();
   }
 
-  fillQuickLogin(perfil) {
-    const userInp = document.getElementById('loginUsername');
-    const passInp = document.getElementById('loginPassword');
-    const alertError = document.getElementById('authAlertError');
-    if (alertError) alertError.classList.add('hidden');
-
-    if (perfil === 'admin') {
-      if (userInp) userInp.value = 'admin';
-      if (passInp) passInp.value = 'Kev2026!Admin';
-    } else if (perfil === 'ingenieria') {
-      if (userInp) userInp.value = 'ingenieria';
-      if (passInp) passInp.value = 'Kev2026!Proyectos';
-    } else if (perfil === 'comercial') {
-      if (userInp) userInp.value = 'comercial';
-      if (passInp) passInp.value = 'Kev2026!Comercial';
-    }
-    if (passInp) passInp.focus();
-  }
-
   async handleLoginSubmit(event) {
     if (event && event.preventDefault) event.preventDefault();
 
