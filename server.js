@@ -43,7 +43,7 @@ const server = http.createServer((req, res) => {
   // --- RUTAS DE API REST ---
   if (pathname === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', serverTime: new Date().toISOString(), version: '1.0.0' }));
+    res.end(JSON.stringify({ status: 'ok', serverTime: new Date().toISOString(), version: '1.1.0' }));
     return;
   }
 
