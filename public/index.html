@@ -107,9 +107,15 @@
     </div>
   </header>
 
+  <!-- ZONA DE DETECCIÓN Y PESTAÑA EN BORDE IZQUIERDO -->
+  <div id="sidebarTriggerZone" class="sidebar-trigger-zone" onmouseenter="app.onEdgeHover()"></div>
+  <div id="sidebarEdgeHandle" onclick="app.toggleSidebar(true)" onmouseenter="app.onEdgeHover()" class="sidebar-edge-handle" title="Menú de Gestión KEV">
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+  </div>
+
   <!-- BARRA LATERAL (SIDEBAR DRAWER) CON AUTOHIDE -->
   <div id="appSidebarOverlay" class="sidebar-overlay" onclick="app.toggleSidebar(false)"></div>
-  <aside id="appSidebar" class="sidebar-drawer" onmouseleave="app.onSidebarMouseLeave()">
+  <aside id="appSidebar" class="sidebar-drawer" onmouseenter="app.onSidebarMouseEnter()" onmouseleave="app.onSidebarMouseLeave()">
     <!-- Header Sidebar -->
     <div class="sidebar-header">
       <div class="flex items-center gap-2">

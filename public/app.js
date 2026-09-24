@@ -11,6 +11,7 @@ class KEVPresupuestoApp {
     this.tabExcelActual = 'RESUMEN GENERAL';
     this.tabConfigActual = 'hh';
     this.sidebarPinned = false;
+    this.sidebarCloseTimer = null;
 
     // Cargar tarifas y catálogos personalizados desde localStorage
     this.cargarConfiguracionUsuario();
@@ -1836,8 +1837,35 @@ ${hitosTexto}
 
       // 3. ADICIONALES
       const wsAdic = wb.addWorksheet('Adicionales');
+      wsAdic.columns = [{ width: 5 }, { width: 10 }, { width: 40 }, { width: 10 }, { width: 12 }, { width: 16 }, { width: 18 }];
       wsAdic.getCell('B2').value = 'PLAN DE COMPRAS PRELIMINAR - ADICIONALES';
-      wsAdic.getCell('G20').value = calc.costoAdicionales;
+      wsAdic.getCell('B5').value = '2,0';
+      wsAdic.getCell('C5').value = 'Adicionales e Imprevistos';
+      ['ITEM', 'DESCRIPCIÓN', 'UNIDAD', 'CANTIDAD', 'COSTO UNIT', 'COSTO'].forEach((h, i) => {
+        const c = wsAdic.getCell(7, i + 2);
+        c.value = h;
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: azulMedio };
+        c.font = fontHeader;
+      });
+      const adicRows = p.adicionales || [];
+      adicRows.forEach((row, i) => {
+        const r = 8 + i;
+        const cant = Number(row.cantidad) || 1;
+        const cu = Number(row.costoUnitario) !== undefined ? Number(row.costoUnitario) : (Number(row.costo) || 0);
+        wsAdic.getCell(`B${r}`).value = row.item || `2.0${i + 1}`;
+        wsAdic.getCell(`C${r}`).value = row.descripcion;
+        wsAdic.getCell(`D${r}`).value = row.unidad || 'GL';
+        wsAdic.getCell(`E${r}`).value = cant;
+        wsAdic.getCell(`F${r}`).value = cu;
+        wsAdic.getCell(`F${r}`).numFmt = '$ #,##0';
+        wsAdic.getCell(`G${r}`).value = { formula: `E${r}*F${r}`, result: cant * cu };
+        wsAdic.getCell(`G${r}`).numFmt = '$ #,##0';
+      });
+      wsAdic.getCell('F20').value = 'COSTO TOTAL';
+      wsAdic.getCell('F20').font = { bold: true };
+      wsAdic.getCell('G20').value = adicRows.length > 0 ? { formula: `SUM(G8:G${7 + adicRows.length})`, result: calc.costoAdicionales } : calc.costoAdicionales;
+      wsAdic.getCell('G20').numFmt = '$ #,##0';
+      wsAdic.getCell('G20').font = { bold: true };
 
       // 4. INTEGRACIÓN ELÉCTRICA
       const wsInt = wb.addWorksheet('Integración Eléctrica');
