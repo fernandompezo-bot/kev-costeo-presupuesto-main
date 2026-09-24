@@ -12,6 +12,8 @@ class KEVPresupuestoApp {
     this.tabConfigActual = 'hh';
     this.sidebarPinned = false;
     this.sidebarCloseTimer = null;
+    this.sidebarPinned = false;
+    this.sidebarCloseTimer = null;
 
     // Cargar tarifas y catálogos personalizados desde localStorage
     this.cargarConfiguracionUsuario();
@@ -35,12 +37,84 @@ class KEVPresupuestoApp {
   }
 
   init() {
+    this.inicializarSidebar();
     this.inicializarSelectores();
     this.inicializarDropzone();
     this.render();
     if (window.lucide) {
       lucide.createIcons();
     }
+  }
+
+  inicializarSidebar() {
+    this.sidebarPinned = localStorage.getItem('kev_sidebar_pinned') === 'true';
+    const pinBtn = document.getElementById('btnPinSidebar');
+    const sidebar = document.getElementById('appSidebar');
+    if (this.sidebarPinned) {
+      document.body.classList.add('sidebar-pinned');
+      if (sidebar) sidebar.classList.add('open');
+      if (pinBtn) pinBtn.classList.add('text-blue-400');
+    }
+  }
+
+  onSidebarMouseEnter() {
+    if (this.sidebarCloseTimer) {
+      clearTimeout(this.sidebarCloseTimer);
+      this.sidebarCloseTimer = null;
+    }
+  }
+
+  onSidebarMouseLeave() {
+    if (!this.sidebarPinned) {
+      if (this.sidebarCloseTimer) clearTimeout(this.sidebarCloseTimer);
+      this.sidebarCloseTimer = setTimeout(() => {
+        this.toggleSidebar(false);
+      }, 350);
+    }
+  }
+
+  toggleSidebar(forzar) {
+    const sidebar = document.getElementById('appSidebar');
+    const overlay = document.getElementById('appSidebarOverlay');
+    if (!sidebar) return;
+
+    if (this.sidebarCloseTimer) {
+      clearTimeout(this.sidebarCloseTimer);
+      this.sidebarCloseTimer = null;
+    }
+
+    const abrir = forzar !== undefined ? forzar : !sidebar.classList.contains('open');
+    if (abrir) {
+      sidebar.classList.add('open');
+      if (!this.sidebarPinned && overlay) overlay.classList.add('active');
+    } else {
+      if (!this.sidebarPinned) {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+      }
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  togglePinSidebar() {
+    this.sidebarPinned = !this.sidebarPinned;
+    localStorage.setItem('kev_sidebar_pinned', String(this.sidebarPinned));
+    const pinBtn = document.getElementById('btnPinSidebar');
+    const overlay = document.getElementById('appSidebarOverlay');
+    const sidebar = document.getElementById('appSidebar');
+
+    if (this.sidebarPinned) {
+      document.body.classList.add('sidebar-pinned');
+      if (sidebar) sidebar.classList.add('open');
+      if (pinBtn) pinBtn.classList.add('text-blue-400');
+      if (overlay) overlay.classList.remove('active');
+      this.showToast("Barra lateral fijada en el borde izquierdo", "info");
+    } else {
+      document.body.classList.remove('sidebar-pinned');
+      if (pinBtn) pinBtn.classList.remove('text-blue-400');
+      this.showToast("Barra lateral en modo autohide", "info");
+    }
+    if (window.lucide) lucide.createIcons();
   }
 
   // Carga configuración persistente de tarifas desde localStorage
@@ -375,6 +449,8 @@ class KEVPresupuestoApp {
     this.setElemVal('q_diasTerreno', p.diasTerreno);
     this.setElemVal('inputDolar', p.dolar);
     this.setElemVal('inputUF', p.uf);
+    this.setElemVal('sidebarInputDolar', p.dolar);
+    this.setElemVal('sidebarInputUF', p.uf);
 
     // Actualizar Paso 2 (HH y Mini Carta Gantt)
     this.setElemText('q_totalHH', `${calc.totalHH} HH`);
@@ -1464,9 +1540,14 @@ ${hitosTexto}
   // =========================================================================
   // GESTOR DE CONFIGURACIÓN Y TARIFAS PERSONALIZADAS
   // =========================================================================
-  abrirModalConfiguracion() {
+  abrirModalConfiguracion(tab = 'hh') {
     this.renderConfiguracion();
     document.getElementById('modalConfiguracion').classList.remove('hidden');
+    this.setTabConfig(tab);
+    if (tab === 'siemens') {
+      this.renderTabConfiguracion('siemens');
+    }
+    if (window.lucide) lucide.createIcons();
   }
 
   cerrarModalConfiguracion() {

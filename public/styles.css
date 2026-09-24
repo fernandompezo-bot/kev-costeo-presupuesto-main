@@ -489,45 +489,6 @@ body {
 /* ==========================================================================
    BARRA LATERAL (SIDEBAR DRAWER) CON AUTOHIDE & PIN
    ========================================================================== */
-/* Pestaña flotante y zona de detección en el borde izquierdo */
-.sidebar-edge-handle {
-  position: fixed;
-  left: 0;
-  top: 48%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 54px;
-  background: #0f2744;
-  color: #94a3b8;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-left: none;
-  border-radius: 0 8px 8px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 135;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
-}
-
-.sidebar-edge-handle:hover {
-  width: 28px;
-  background: #2563eb;
-  color: white;
-  box-shadow: 4px 0 14px rgba(37, 99, 235, 0.5);
-}
-
-.sidebar-trigger-zone {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 14px;
-  z-index: 130;
-  pointer-events: auto;
-}
-
 .sidebar-drawer {
   position: fixed;
   top: 0;
@@ -552,11 +513,6 @@ body {
 body.sidebar-pinned {
   padding-left: 320px;
   transition: padding-left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-body.sidebar-pinned .sidebar-edge-handle,
-body.sidebar-pinned .sidebar-trigger-zone {
-  display: none !important;
 }
 
 body.sidebar-pinned .sidebar-overlay {
