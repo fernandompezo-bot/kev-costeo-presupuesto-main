@@ -1,24 +1,34 @@
 /* ==========================================================================
-   KEV PROCESS SpA - Sistema de Presupuestos y Costeo
-   styles.css - Estilos corporativos y de alta densidad para ingeniería
+   KEV PROCESS SpA - Sistema de Presupuestos y Costeo de Ingeniería
+   styles.css - Estilos corporativos basados en www.kevprocess.com
    ========================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
-  --primary: #0f2744;
-  --primary-light: #1e3a5f;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --bg-main: #f8fafc;
-  --bg-card: #ffffff;
-  --border: #e2e8f0;
-  --border-dark: #94a3b8;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --excel-header-bg: #1e3a5f;
-  --excel-header-text: #ffffff;
+  /* Paleta Corporativa Oficial KEV Process */
+  --primary: #1D6A6E;          /* Teal corporativo KEV (botones, acentos de acción) */
+  --primary-hover: #155457;
+  --primary-light: #EBF7F7;
+  --navy: #0B1121;             /* Navy tecnológico (headers, fondos oscuros, tablas) */
+  --navy-light: #151F3A;
+  --navy-border: #1E293B;
+  --cyan: #00B4D8;             /* Cyan de alta tecnología (iconos, focus, KPIs) */
+  --cyan-hover: #0096B7;
+  --accent: #1D6A6E;
+  --accent-hover: #155457;
+  --success: #059669;          /* Verde de rentabilidad / éxito */
+  --success-hover: #047857;
+  --warning: #F59E0B;
+  --danger: #FF2357;           /* Rosa/Rojo acento de alerta */
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --border: #E2E8F0;
+  --border-dark: #94A3B8;
+  --text-main: #0B1121;
+  --text-muted: #64748B;
+  --excel-header-bg: #0B1121;
+  --excel-header-text: #FFFFFF;
 }
 
 * {
@@ -28,7 +38,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-main);
   line-height: 1.5;
@@ -37,10 +47,11 @@ body {
 
 /* Header Corporativo */
 .header-bar {
-  background: linear-gradient(135deg, #0b1d33 0%, #173356 100%);
+  background: var(--navy);
   color: white;
   padding: 0.85rem 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 2px solid var(--primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -55,68 +66,94 @@ body {
   gap: 0.75rem;
 }
 
-.brand-logo-box {
-  background: #2563eb;
-  color: white;
-  font-weight: 900;
-  letter-spacing: 1px;
-  padding: 0.35rem 0.65rem;
-  border-radius: 6px;
-  font-size: 1.1rem;
-}
-
 /* Modos Selector (Cuestionario vs Desarrollo) */
 .mode-toggle-container {
   display: flex;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   padding: 4px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .mode-btn {
   padding: 0.45rem 1.1rem;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
   background: transparent;
-  color: #cbd5e1;
+  color: #CBD5E1;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.mode-btn.active {
-  background: white;
-  color: #0f2744;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+.mode-btn:hover {
+  color: white;
 }
 
-/* Acciones principales */
+.mode-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Acciones principales / Botones */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.95rem;
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   font-weight: 600;
   border-radius: 6px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
+  font-family: inherit;
 }
 
-.btn-primary { background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-success { background: #059669; color: white; }
-.btn-success:hover { background: #047857; }
-.btn-secondary { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
-.btn-secondary:hover { background: #e2e8f0; }
-.btn-dark { background: #0f172a; color: white; }
-.btn-dark:hover { background: #1e293b; }
+.btn-primary { 
+  background: var(--primary); 
+  color: white; 
+  border-color: var(--primary-hover);
+}
+.btn-primary:hover { 
+  background: var(--primary-hover); 
+  box-shadow: 0 4px 12px rgba(29, 106, 110, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-success { 
+  background: var(--success); 
+  color: white; 
+  border-color: var(--success-hover);
+}
+.btn-success:hover { 
+  background: var(--success-hover); 
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary { 
+  background: #FFFFFF; 
+  color: #1E293B; 
+  border-color: #CBD5E1; 
+}
+.btn-secondary:hover { 
+  background: #F1F5F9; 
+  border-color: #94A3B8; 
+}
+
+.btn-dark { 
+  background: var(--navy); 
+  color: white; 
+}
+.btn-dark:hover { 
+  background: var(--navy-light); 
+}
 
 /* Contenedor Principal */
 .app-container {
@@ -137,7 +174,7 @@ body {
 .stat-value {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #0f2744;
+  color: var(--navy);
 }
 
 /* Stepper en Modo Cuestionario */
@@ -148,7 +185,7 @@ body {
   border-radius: 10px;
   overflow-x: auto;
   margin-bottom: 1.25rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .step-item {
@@ -158,7 +195,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-size: 0.825rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-muted);
   border-bottom: 3px solid transparent;
@@ -167,35 +204,41 @@ body {
   white-space: nowrap;
 }
 
+.step-item:hover {
+  color: var(--primary);
+  background: #FAFAFA;
+}
+
 .step-item.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
-  background: #f8faff;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: #F0FDFA;
 }
 
 .step-item.completed {
-  color: #059669;
+  color: var(--success);
 }
 
 .step-number {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #e2e8f0;
+  background: #E2E8F0;
   color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .step-item.active .step-number {
-  background: #2563eb;
+  background: var(--primary);
   color: white;
 }
 
 .step-item.completed .step-number {
-  background: #059669;
+  background: var(--success);
   color: white;
 }
 
@@ -205,42 +248,45 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
 }
 
 /* Modo Desarrollo (Pestañas Multitab de Excel) */
 .excel-tabs {
   display: flex;
-  background: #e2e8f0;
+  background: #E2E8F0;
   padding: 4px 6px 0 6px;
   border-radius: 8px 8px 0 0;
   overflow-x: auto;
   gap: 2px;
-  border-bottom: 2px solid #0f2744;
+  border-bottom: 2px solid var(--navy);
 }
 
 .excel-tab {
   padding: 0.5rem 1rem;
-  font-size: 0.825rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  background: #cbd5e1;
+  background: #CBD5E1;
   color: #334155;
   border-radius: 6px 6px 0 0;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  border: none;
 }
 
 .excel-tab:hover {
-  background: #e2e8f0;
+  background: #E2E8F0;
+  color: var(--navy);
 }
 
 .excel-tab.active {
-  background: #0f2744;
+  background: var(--navy);
   color: white;
+  border-top: 2px solid var(--cyan);
 }
 
 /* Tablas Matriciales Tipo Excel */
@@ -256,7 +302,7 @@ body {
 .excel-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.825rem;
 }
 
 .excel-table th {
@@ -265,19 +311,20 @@ body {
   padding: 0.6rem 0.75rem;
   text-align: left;
   font-weight: 700;
-  border: 1px solid #334e68;
-  font-size: 0.8rem;
-  letter-spacing: 0.3px;
+  border: 1px solid var(--navy-border);
+  font-size: 0.775rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .excel-table td {
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--border);
-  color: #1e293b;
+  color: #1E293B;
 }
 
 .excel-table tr:hover td {
-  background-color: #f1f5f9;
+  background-color: #F8FAFC;
 }
 
 .excel-table input[type="text"],
@@ -285,18 +332,19 @@ body {
 .excel-table select {
   width: 100%;
   padding: 0.35rem 0.45rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #CBD5E1;
   border-radius: 4px;
-  font-size: 0.85rem;
-  background: #fdfdfd;
+  font-size: 0.825rem;
+  background: #FDFDFD;
+  font-family: inherit;
 }
 
 .excel-table input:focus,
 .excel-table select:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--primary);
   background: white;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+  box-shadow: 0 0 0 2px rgba(29, 106, 110, 0.2);
 }
 
 .num-cell {
@@ -307,17 +355,17 @@ body {
 
 .total-row td {
   font-weight: 800;
-  background-color: #f8fafc;
-  border-top: 2px solid #0f2744;
-  border-bottom: 2px solid #0f2744;
+  background-color: #F8FAFC;
+  border-top: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
 }
 
 /* Modales */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
+  background: rgba(11, 17, 33, 0.7);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -332,7 +380,8 @@ body {
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
 }
 
 .modal-header {
@@ -354,12 +403,12 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  background: #f8fafc;
+  background: #F8FAFC;
   border-radius: 0 0 12px 12px;
 }
 
 /* ==========================================================================
-   MEJORAS NIVEL 1 & 2: GANTT, DROPZONE, TOASTS, CONFIGURACIÓN
+   GANTT, DROPZONE, TOASTS, CONFIGURACIÓN
    ========================================================================== */
 
 /* Mini Carta Gantt */
@@ -377,12 +426,12 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 0.45rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #F1F5F9;
   font-size: 0.775rem;
 }
 
 .gantt-bar-track {
-  background: #f1f5f9;
+  background: #F1F5F9;
   height: 22px;
   border-radius: 4px;
   position: relative;
@@ -404,25 +453,25 @@ body {
   transition: all 0.3s ease;
 }
 
-.gantt-bar-oficina { background: linear-gradient(90deg, #2563eb, #3b82f6); }
-.gantt-bar-fat { background: linear-gradient(90deg, #8b5cf6, #a855f7); }
-.gantt-bar-terreno { background: linear-gradient(90deg, #d97706, #f59e0b); }
-.gantt-bar-cierre { background: linear-gradient(90deg, #059669, #10b981); }
+.gantt-bar-oficina { background: linear-gradient(90deg, #1D6A6E, #00B4D8); }
+.gantt-bar-fat { background: linear-gradient(90deg, #0284C7, #38BDF8); }
+.gantt-bar-terreno { background: linear-gradient(90deg, #D97706, #F59E0B); }
+.gantt-bar-cierre { background: linear-gradient(90deg, #059669, #10B981); }
 
 /* Dropzone de Importación */
 .dropzone {
-  border: 2px dashed #94a3b8;
+  border: 2px dashed #94A3B8;
   border-radius: 10px;
   padding: 2rem 1.5rem;
   text-align: center;
-  background: #f8fafc;
+  background: #F8FAFC;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .dropzone:hover, .dropzone.dragover {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--primary);
+  background: #F0FDFA;
 }
 
 /* Toast Notifications */
@@ -439,13 +488,14 @@ body {
 
 .toast {
   pointer-events: auto;
-  background: #0f2744;
+  background: var(--navy);
   color: white;
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   font-size: 0.825rem;
   font-weight: 600;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--navy-border);
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -454,9 +504,9 @@ body {
   animation: toastIn 0.25s forwards, toastOut 0.25s forwards 3.5s;
 }
 
-.toast.toast-success { border-left: 4px solid #10b981; }
-.toast.toast-warning { border-left: 4px solid #f59e0b; }
-.toast.toast-info { border-left: 4px solid #3b82f6; }
+.toast.toast-success { border-left: 4px solid #10B981; }
+.toast.toast-warning { border-left: 4px solid #F59E0B; }
+.toast.toast-info { border-left: 4px solid var(--cyan); }
 
 @keyframes toastIn {
   to { transform: translateY(0); opacity: 1; }
@@ -472,7 +522,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   font-size: 0.725rem;
-  color: #94a3b8;
+  color: #94A3B8;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.25rem 0.6rem;
   border-radius: 9999px;
@@ -482,8 +532,8 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  background-color: #10B981;
+  box-shadow: 0 0 6px #10B981;
 }
 
 /* ==========================================================================
@@ -495,10 +545,11 @@ body {
   left: 0;
   bottom: 0;
   width: 320px;
-  background: #081424;
-  color: #f1f5f9;
+  background: var(--navy);
+  color: #F1F5F9;
   z-index: 160;
-  box-shadow: 6px 0 30px rgba(0, 0, 0, 0.55);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.6);
+  border-right: 1px solid var(--navy-border);
   transform: translateX(-100%);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -522,7 +573,7 @@ body.sidebar-pinned .sidebar-overlay {
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(11, 17, 33, 0.6);
   backdrop-filter: blur(2px);
   z-index: 155;
   opacity: 0;
@@ -537,8 +588,8 @@ body.sidebar-pinned .sidebar-overlay {
 
 .sidebar-header {
   padding: 1.1rem 1.25rem;
-  background: #07101c;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #070B16;
+  border-bottom: 1px solid rgba(0, 180, 216, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -555,7 +606,7 @@ body.sidebar-pinned .sidebar-overlay {
 
 .sidebar-footer {
   padding: 1rem 1.25rem;
-  background: #07101c;
+  background: #070B16;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -567,7 +618,7 @@ body.sidebar-pinned .sidebar-overlay {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--cyan);
   margin-bottom: 0.5rem;
   padding-left: 0.5rem;
 }
@@ -581,7 +632,7 @@ body.sidebar-pinned .sidebar-overlay {
   border-radius: 6px;
   font-size: 0.825rem;
   font-weight: 500;
-  color: #cbd5e1;
+  color: #CBD5E1;
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
@@ -590,13 +641,13 @@ body.sidebar-pinned .sidebar-overlay {
 }
 
 .sidebar-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(29, 106, 110, 0.25);
   color: white;
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 180, 216, 0.3);
 }
 
 .sidebar-menu-btn.active {
-  background: #2563eb;
+  background: var(--primary);
   color: white;
   font-weight: 600;
 }
@@ -612,10 +663,10 @@ body.sidebar-pinned .sidebar-overlay {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 31, 58, 0.7);
   padding: 0.25rem 0.65rem;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(0, 180, 216, 0.25);
 }
 
 /* Acordeón de Textos de Oferta */
@@ -630,20 +681,21 @@ body.sidebar-pinned .sidebar-overlay {
 
 .text-section-header {
   padding: 0.7rem 1rem;
-  background: #f8fafc;
+  background: #F8FAFC;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1E293B;
   border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
   user-select: none;
 }
 
 .text-section-header:hover {
-  background: #f1f5f9;
+  background: #F1F5F9;
 }
 
 .text-section-body {
@@ -652,7 +704,7 @@ body.sidebar-pinned .sidebar-overlay {
 
 .text-section-textarea {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #CBD5E1;
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
   font-size: 0.775rem;
@@ -664,7 +716,6 @@ body.sidebar-pinned .sidebar-overlay {
 
 .text-section-textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(29, 106, 110, 0.2);
 }
-

@@ -53,7 +53,7 @@ class KEVPresupuestoApp {
     if (this.sidebarPinned) {
       document.body.classList.add('sidebar-pinned');
       if (sidebar) sidebar.classList.add('open');
-      if (pinBtn) pinBtn.classList.add('text-blue-400');
+      if (pinBtn) pinBtn.classList.add('text-cyan-400');
     }
   }
 
@@ -106,12 +106,12 @@ class KEVPresupuestoApp {
     if (this.sidebarPinned) {
       document.body.classList.add('sidebar-pinned');
       if (sidebar) sidebar.classList.add('open');
-      if (pinBtn) pinBtn.classList.add('text-blue-400');
+      if (pinBtn) pinBtn.classList.add('text-cyan-400');
       if (overlay) overlay.classList.remove('active');
       this.showToast("Barra lateral fijada en el borde izquierdo", "info");
     } else {
       document.body.classList.remove('sidebar-pinned');
-      if (pinBtn) pinBtn.classList.remove('text-blue-400');
+      if (pinBtn) pinBtn.classList.remove('text-cyan-400');
       this.showToast("Barra lateral en modo autohide", "info");
     }
     if (window.lucide) lucide.createIcons();
@@ -592,8 +592,8 @@ class KEVPresupuestoApp {
 
     cont.innerHTML = this.proyecto.exclusiones.map((ex, idx) => `
       <div class="flex items-center gap-2 p-1.5 bg-white border rounded text-xs hover:bg-slate-50">
-        <input type="checkbox" id="chkEx_${idx}" ${ex.activo ? 'checked' : ''} onchange="app.toggleExclusion(${idx})" class="w-4 h-4 text-blue-600 rounded">
-        <input type="text" value="${ex.texto}" onchange="app.actualizarTextoExclusion(${idx}, this.value)" class="flex-1 p-1 border-0 focus:ring-1 focus:ring-blue-500 rounded text-xs ${ex.activo ? 'font-semibold text-slate-800' : 'text-slate-400 line-through'}">
+        <input type="checkbox" id="chkEx_${idx}" ${ex.activo ? 'checked' : ''} onchange="app.toggleExclusion(${idx})" class="w-4 h-4 text-teal-700 accent-teal-700 rounded">
+        <input type="text" value="${ex.texto}" onchange="app.actualizarTextoExclusion(${idx}, this.value)" class="flex-1 p-1 border-0 focus:ring-1 focus:ring-teal-600 rounded text-xs ${ex.activo ? 'font-semibold text-slate-800' : 'text-slate-400 line-through'}">
         <button onclick="app.eliminarExclusion(${idx})" class="text-red-400 hover:text-red-600 p-1" title="Eliminar exclusión">&times;</button>
       </div>
     `).join('');
@@ -686,7 +686,7 @@ class KEVPresupuestoApp {
         <tr>
           <td class="font-mono text-slate-500 text-xs">${eq.item}</td>
           <td>
-            <input type="text" value="${eq.codigo}" onchange="app.actualizarFilaEquipo(${idx}, 'codigo', this.value)" class="font-mono font-bold text-xs text-blue-900">
+            <input type="text" value="${eq.codigo}" onchange="app.actualizarFilaEquipo(${idx}, 'codigo', this.value)" class="font-mono font-bold text-xs text-slate-900">
           </td>
           <td>
             <input type="text" value="${eq.descripcion}" onchange="app.actualizarFilaEquipo(${idx}, 'descripcion', this.value)" class="text-xs">
@@ -708,7 +708,7 @@ class KEVPresupuestoApp {
           <td class="text-right font-mono text-xs text-slate-700">
             ${eq.listaUSD === 0 ? `<input type="number" value="${eq.costoCLP || 0}" onchange="app.actualizarFilaEquipo(${idx}, 'costoCLP', this.value)" class="text-right font-mono text-xs">` : this.fmtCLP(costoUnitCLP)}
           </td>
-          <td class="text-right font-mono font-bold text-blue-900 text-xs">
+          <td class="text-right font-mono font-bold text-slate-900 text-xs">
             ${this.fmtCLP(totalCLP)}
           </td>
           <td class="text-center">
@@ -829,7 +829,7 @@ class KEVPresupuestoApp {
 
       return `
         <tr>
-          <td class="font-mono font-bold text-xs text-blue-900">${h.ep}</td>
+          <td class="font-mono font-bold text-xs text-slate-900">${h.ep}</td>
           <td>
             <input type="text" value="${h.hito}" onchange="app.actualizarHito(${idx}, 'hito', this.value)" class="text-xs">
           </td>
@@ -907,7 +907,7 @@ class KEVPresupuestoApp {
           <td class="font-mono text-xs text-slate-500">${f.item}</td>
           <td class="font-semibold text-xs text-slate-800">${f.desc}</td>
           <td class="text-right font-mono font-bold text-xs text-slate-800">${this.fmtCLP(f.costo)}</td>
-          <td class="text-right font-mono text-xs text-blue-600">${(f.margen * 100).toFixed(0)}%</td>
+          <td class="text-right font-mono text-xs text-teal-800 font-semibold">${(f.margen * 100).toFixed(0)}%</td>
           <td class="text-right font-mono font-extrabold text-xs text-slate-900">${this.fmtCLP(f.precio)}</td>
           <td class="text-right font-mono font-semibold text-xs text-emerald-800">$ ${precioUSD.toLocaleString('es-CL')}</td>
         </tr>
@@ -961,7 +961,7 @@ class KEVPresupuestoApp {
           <tfoot>
             <tr class="total-row">
               <td colspan="5" class="text-right font-bold">COSTO TOTAL INGENIERÍA:</td>
-              <td class="text-right font-mono font-extrabold text-blue-900">${this.fmtCLP(calc.costoIngenieria)}</td>
+              <td class="text-right font-mono font-extrabold text-slate-900">${this.fmtCLP(calc.costoIngenieria)}</td>
               <td></td>
             </tr>
           </tfoot>
@@ -988,10 +988,10 @@ class KEVPresupuestoApp {
               const cant = Number(eq.cantidad) || 0;
               let cuCLP = 0;
               if (eq.listaUSD > 0) {
-                const desc = (KEV_MAESTROS.descuentosSiemens[eq.grupo] || { descuento: 0 }).descuento;
-                cuCLP = Math.round(eq.listaUSD * (1 - desc) * this.proyecto.dolar);
+                 const desc = (KEV_MAESTROS.descuentosSiemens[eq.grupo] || { descuento: 0 }).descuento;
+                 cuCLP = Math.round(eq.listaUSD * (1 - desc) * this.proyecto.dolar);
               } else {
-                cuCLP = Number(eq.costoCLP) || 0;
+                 cuCLP = Number(eq.costoCLP) || 0;
               }
               return `
                 <tr>
@@ -1003,7 +1003,7 @@ class KEVPresupuestoApp {
                   <td class="text-center text-xs">CU</td>
                   <td><input type="number" value="${eq.cantidad}" onchange="app.actualizarFilaEquipo(${i}, 'cantidad', this.value)" class="text-right font-mono text-xs"></td>
                   <td class="text-right font-mono text-xs">${this.fmtCLP(cuCLP)}</td>
-                  <td class="text-right font-mono font-bold text-xs text-blue-900">${this.fmtCLP(cuCLP * cant)}</td>
+                  <td class="text-right font-mono font-bold text-xs text-slate-900">${this.fmtCLP(cuCLP * cant)}</td>
                 </tr>
               `;
             }).join('')}
@@ -1011,7 +1011,7 @@ class KEVPresupuestoApp {
           <tfoot>
             <tr class="total-row">
               <td colspan="8" class="text-right font-bold">TOTAL EQUIPOS:</td>
-              <td class="text-right font-mono font-extrabold text-blue-900">${this.fmtCLP(calc.costoEquipos)}</td>
+              <td class="text-right font-mono font-extrabold text-slate-900">${this.fmtCLP(calc.costoEquipos)}</td>
             </tr>
           </tfoot>
         </table>
@@ -1561,10 +1561,10 @@ ${hitosTexto}
       const pane = document.getElementById(`cfgPane_${t}`);
       if (btn && pane) {
         if (t === tab) {
-          btn.className = "px-3 py-1 font-bold rounded bg-blue-100 text-blue-900";
+          btn.className = "px-3 py-1 font-bold rounded bg-teal-50 text-teal-800 border border-teal-200";
           pane.classList.remove('hidden');
         } else {
-          btn.className = "px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700";
+          btn.className = "px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200";
           pane.classList.add('hidden');
         }
       }

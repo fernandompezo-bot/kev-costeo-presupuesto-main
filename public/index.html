@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KEV PROCESS - Sistema de Presupuestos y Costeo de Ingeniería</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   
   <!-- Tailwind CSS CDN para layout ágil -->
@@ -12,14 +16,24 @@
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
           colors: {
             kev: {
-              50: '#f0f4f8',
-              100: '#d9e2ec',
-              500: '#1b365d',
-              700: '#0f2744',
-              800: '#0a192f',
-              blue: '#2563eb'
+              teal: '#1D6A6E',
+              tealDark: '#155457',
+              tealLight: '#26898E',
+              navy: '#0B1121',
+              navyLight: '#151F3A',
+              cyan: '#00B4D8',
+              50: '#F0FDFA',
+              100: '#CCFBF1',
+              500: '#1D6A6E',
+              600: '#155457',
+              700: '#0B1121',
+              800: '#070B16',
+              blue: '#1D6A6E'
             }
           }
         }
@@ -47,22 +61,24 @@
   <header class="header-bar">
     <div class="flex items-center gap-3">
       <!-- Botón Toggle Barra Lateral -->
-      <button id="btnToggleSidebar" onclick="app.toggleSidebar()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition cursor-pointer" title="Menú de Navegación y Herramientas">
+      <button id="btnToggleSidebar" onclick="app.toggleSidebar()" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-400 border border-slate-700 flex items-center justify-center transition cursor-pointer" title="Menú de Navegación y Herramientas">
         <i data-lucide="menu" class="w-5 h-5"></i>
       </button>
 
-      <!-- Logo Corporativo -->
+      <!-- Logo Corporativo Real KEV Process -->
       <div class="brand-badge">
-        <div class="brand-logo-box">KEV</div>
+        <div class="bg-white px-2.5 py-1 rounded-md shadow-xs border border-slate-200/20 flex items-center">
+          <img src="logo.png" alt="KEV Process SpA" class="h-6 sm:h-7 w-auto object-contain">
+        </div>
         <div class="hidden sm:block">
-          <h1 class="text-sm font-bold tracking-wide leading-tight">KEV PROCESS SpA</h1>
-          <p class="text-[11px] text-slate-300">Ingeniería & Control</p>
+          <h1 class="text-xs font-extrabold tracking-wider leading-tight text-white uppercase">KEV PROCESS SpA</h1>
+          <p class="text-[10px] text-cyan-300 font-medium tracking-wide">Ingeniería & Control de Procesos</p>
         </div>
       </div>
 
       <!-- Identificador de Proyecto Activo -->
-      <div class="header-project-badge hidden lg:flex ml-3 pl-3 border-l border-slate-700">
-        <span id="topHeaderCorrelativo" class="font-extrabold text-blue-400 text-xs tracking-wider">101-2026</span>
+      <div class="header-project-badge hidden lg:flex ml-3 pl-3 border-l border-slate-700/80">
+        <span id="topHeaderCorrelativo" class="font-extrabold text-cyan-400 text-xs tracking-wider">101-2026</span>
         <span id="topHeaderTitulo" class="text-xs text-slate-200 font-medium truncate max-w-[260px]">Migración Arrancador Sirius</span>
       </div>
     </div>
@@ -96,7 +112,7 @@
       <!-- Margen Global -->
       <div class="header-kpi-pill">
         <span class="text-[9px] uppercase font-bold text-slate-400 leading-none">Margen</span>
-        <span id="topHeaderMargen" class="font-extrabold text-blue-400 text-xs sm:text-sm">35,5%</span>
+        <span id="topHeaderMargen" class="font-extrabold text-cyan-400 text-xs sm:text-sm">35,5%</span>
       </div>
 
       <!-- Badge de Auto-Guardado -->
@@ -112,9 +128,14 @@
   <aside id="appSidebar" class="sidebar-drawer" onmouseenter="app.onSidebarMouseEnter()" onmouseleave="app.onSidebarMouseLeave()">
     <!-- Header Sidebar -->
     <div class="sidebar-header">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">KEV</div>
-        <span class="font-bold text-sm tracking-wide text-white">Menú de Gestión</span>
+      <div class="flex items-center gap-2.5">
+        <div class="bg-white px-2 py-0.5 rounded shadow-xs flex items-center">
+          <img src="logo.png" alt="KEV Process" class="h-5 w-auto object-contain">
+        </div>
+        <div class="flex flex-col">
+          <span class="font-bold text-xs tracking-wide text-white leading-tight">KEV PROCESS</span>
+          <span class="text-[9px] text-cyan-400 font-semibold tracking-wider">PANEL DE GESTIÓN</span>
+        </div>
       </div>
       <div class="flex items-center gap-1">
         <button id="btnPinSidebar" onclick="app.togglePinSidebar()" class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer" title="Fijar barra lateral">
@@ -131,7 +152,7 @@
       <!-- 1. Presets de Proyectos -->
       <div>
         <div class="sidebar-section-title">Plantilla / Preset Base</div>
-        <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="w-full text-xs py-2 px-2.5 rounded bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-blue-500">
+        <select id="selectPreset" onchange="app.cargarPreset(this.value)" class="w-full text-xs py-2 px-2.5 rounded bg-slate-900 text-white border border-slate-700 focus:outline-none focus:border-cyan-400">
           <option value="101-2026">⚡ 101-2026 (Sirius a G120)</option>
           <option value="061-2026">⚡ 061-2026 (Asistencia PCS7)</option>
           <option value="037-2026">⚡ 037-2026 (Hardware IPC)</option>
@@ -152,19 +173,19 @@
               <span class="text-slate-400 font-mono font-bold">$</span>
               <input type="number" id="sidebarInputDolar" min="500" max="2500" step="1"
                 oninput="app.actualizarParametro('dolar', this.value)"
-                class="w-full p-1.5 rounded bg-slate-800 text-white border border-slate-600 font-mono font-bold text-xs focus:outline-none focus:border-blue-400">
+                class="w-full p-1.5 rounded bg-slate-800 text-white border border-slate-600 font-mono font-bold text-xs focus:outline-none focus:border-cyan-400">
             </div>
           </div>
           <div>
             <label class="block text-[11px] text-slate-400 mb-1 font-semibold flex items-center justify-between">
               <span>Unidad de Fomento (UF)</span>
-              <span class="text-blue-400 font-mono font-bold">$ CLP</span>
+              <span class="text-cyan-400 font-mono font-bold">$ CLP</span>
             </label>
             <div class="flex items-center gap-1.5">
               <span class="text-slate-400 font-mono font-bold">$</span>
               <input type="number" id="sidebarInputUF" min="20000" max="80000" step="10"
                 oninput="app.actualizarParametro('uf', this.value)"
-                class="w-full p-1.5 rounded bg-slate-800 text-white border border-slate-600 font-mono font-bold text-xs focus:outline-none focus:border-blue-400">
+                class="w-full p-1.5 rounded bg-slate-800 text-white border border-slate-600 font-mono font-bold text-xs focus:outline-none focus:border-cyan-400">
             </div>
           </div>
         </div>
@@ -174,7 +195,7 @@
       <div>
         <div class="sidebar-section-title">Siemens & Tarifas</div>
         <div class="space-y-1.5">
-          <button onclick="app.abrirModalConfiguracion('siemens')" class="sidebar-menu-btn bg-slate-900/60 border border-slate-700/80 hover:border-blue-500 text-blue-200 hover:text-white">
+          <button onclick="app.abrirModalConfiguracion('siemens')" class="sidebar-menu-btn bg-slate-900/60 border border-slate-700/80 hover:border-cyan-500 text-teal-100 hover:text-white">
             <i data-lucide="percent" class="w-4 h-4 text-cyan-400"></i>
             <div class="flex flex-col text-left">
               <span class="font-bold text-xs">Editar Descuentos Siemens</span>
@@ -259,11 +280,11 @@
   </aside>
 
   <!-- BARRA RESUMEN KPI EN TIEMPO REAL -->
-  <section class="bg-white border-b border-slate-200 px-6 py-3 shadow-sm">
+  <section class="bg-white border-b border-slate-200 px-6 py-3 shadow-xs">
     <div class="max-w-[1550px] mx-auto grid grid-cols-2 md:grid-cols-6 gap-4 items-center text-xs">
       <div>
         <span class="text-slate-500 font-semibold block">CLIENTE & CORRELATIVO</span>
-        <span id="kpiClienteCorrelativo" class="font-bold text-slate-800 text-sm truncate block">AZA | 101-2026</span>
+        <span id="kpiClienteCorrelativo" class="font-bold text-slate-900 text-sm truncate block">AZA | 101-2026</span>
       </div>
       <div>
         <span class="text-slate-500 font-semibold block">COSTO TOTAL PROYECTO</span>
@@ -271,7 +292,7 @@
       </div>
       <div>
         <span class="text-slate-500 font-semibold block">MARGEN CONSOLIDADO</span>
-        <span id="kpiMargenConsolidado" class="font-extrabold text-blue-600 text-sm">36,0%</span>
+        <span id="kpiMargenConsolidado" class="font-extrabold text-teal-800 text-sm">36,0%</span>
       </div>
       <div>
         <span class="text-slate-500 font-semibold block">PRECIO VENTA CLP</span>
@@ -284,11 +305,11 @@
       <div class="flex items-center gap-2">
         <div class="w-full">
           <label class="text-slate-400 font-semibold block">T/C DÓLAR (CLP)</label>
-          <input type="number" id="inputDolar" value="950" onchange="app.actualizarParametro('dolar', this.value)" class="w-20 px-2 py-0.5 border rounded text-xs font-bold text-slate-700">
+          <input type="number" id="inputDolar" value="950" onchange="app.actualizarParametro('dolar', this.value)" class="w-20 px-2 py-0.5 border rounded text-xs font-bold text-slate-700 focus:border-teal-600 focus:outline-none">
         </div>
         <div class="w-full">
           <label class="text-slate-400 font-semibold block">UF (CLP)</label>
-          <input type="number" id="inputUF" value="40800" onchange="app.actualizarParametro('uf', this.value)" class="w-24 px-2 py-0.5 border rounded text-xs font-bold text-slate-700">
+          <input type="number" id="inputUF" value="40800" onchange="app.actualizarParametro('uf', this.value)" class="w-24 px-2 py-0.5 border rounded text-xs font-bold text-slate-700 focus:border-teal-600 focus:outline-none">
         </div>
       </div>
     </div>
@@ -336,8 +357,8 @@
 
       <!-- PASO 1: DATOS GENERALES -->
       <div id="pasoContenido1" class="step-pane">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="building" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="building" class="w-5 h-5 text-kev-teal"></i>
           Paso 1: Identificación del Proyecto y Cliente
         </h2>
         <p class="text-xs text-slate-500 mb-4">Ingrese la información básica del cliente, correlativo oficial y título de la oferta.</p>
@@ -354,7 +375,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Correlativo Oferta</label>
-            <input type="text" id="q_correlativo" class="w-full p-2 border rounded text-xs font-mono font-bold text-blue-700" placeholder="Ej: 101-2026" onchange="app.actualizarDato('correlativo', this.value)">
+            <input type="text" id="q_correlativo" class="w-full p-2 border rounded text-xs font-mono font-bold text-kev-teal" placeholder="Ej: 101-2026" onchange="app.actualizarDato('correlativo', this.value)">
           </div>
           <div class="md:col-span-2">
             <label class="block text-xs font-semibold text-slate-700 mb-1">Título del Requerimiento / Proyecto</label>
@@ -375,13 +396,13 @@
 
       <!-- PASO 2: INGENIERÍA & HH -->
       <div id="pasoContenido2" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="cpu" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="cpu" class="w-5 h-5 text-kev-teal"></i>
           Paso 2: Estimación de Servicios e Horas Hombre (HH)
         </h2>
         <p class="text-xs text-slate-500 mb-4">Defina semanas de oficina, días en terreno y horas por especialidad según la tarifa estándar.</p>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-3 bg-blue-50/60 rounded-lg border border-blue-100">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-3 bg-teal-50/60 rounded-lg border border-teal-100">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Semanas en Oficina (Análisis/Prog.)</label>
             <input type="number" id="q_semanasOficina" class="w-full p-1.5 border rounded text-xs font-bold" min="0" value="2" onchange="app.actualizarDato('semanasOficina', this.value)">
@@ -392,11 +413,11 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Subtotal HH Estimadas</label>
-            <div id="q_totalHH" class="text-sm font-extrabold text-blue-700 mt-1">198 HH</div>
+            <div id="q_totalHH" class="text-sm font-extrabold text-teal-800 mt-1">198 HH</div>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Costo Total Ingeniería</label>
-            <div id="q_costoIngenieria" class="text-sm font-extrabold text-slate-800 mt-1">$ 3.744.000</div>
+            <div id="q_costoIngenieria" class="text-sm font-extrabold text-slate-900 mt-1">$ 3.744.000</div>
           </div>
         </div>
 
@@ -422,10 +443,10 @@
         <div class="mt-6 border-t pt-4">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5 uppercase tracking-wider">
-              <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
+              <i data-lucide="calendar" class="w-4 h-4 text-kev-teal"></i>
               Cronograma Referencial de Hitos (Mini Carta Gantt)
             </h3>
-            <span id="ganttResumenSemanas" class="text-xs text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+            <span id="ganttResumenSemanas" class="text-xs text-teal-900 font-bold bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
               Total: 2 semanas oficina + 4 días terreno
             </span>
           </div>
@@ -449,8 +470,8 @@
 
       <!-- PASO 3: EQUIPOS & SIEMENS -->
       <div id="pasoContenido3" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="box" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="box" class="w-5 h-5 text-kev-teal"></i>
           Paso 3: Suministro de Equipos y Hardware
         </h2>
         <p class="text-xs text-slate-500 mb-4">Seleccione equipos del catálogo o agregue nuevos con su grupo de descuento Siemens oficial (`XG`, `XD`, etc.).</p>
@@ -484,7 +505,7 @@
             <tfoot>
               <tr class="total-row">
                 <td colspan="8" class="text-right font-bold">TOTAL EQUIPOS (COSTO NETO):</td>
-                <td id="q_totalEquiposCLP" class="text-right font-mono font-extrabold text-blue-800">$ 21.647.926</td>
+                <td id="q_totalEquiposCLP" class="text-right font-mono font-extrabold text-slate-900">$ 21.647.926</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -508,8 +529,8 @@
 
       <!-- PASO 4: INTEGRACIÓN & TABLEROS -->
       <div id="pasoContenido4" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="layers" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="layers" class="w-5 h-5 text-kev-teal"></i>
           Paso 4: Integración Eléctrica y Fabricación de Tableros
         </h2>
         <p class="text-xs text-slate-500 mb-4">Horas de armado de tablero, borneras, canaletas y pruebas de taller.</p>
@@ -531,7 +552,7 @@
             <tfoot>
               <tr class="total-row">
                 <td colspan="5" class="text-right font-bold">TOTAL INTEGRACIÓN ELÉCTRICA:</td>
-                <td id="q_totalIntegracionCLP" class="text-right font-mono font-extrabold text-blue-800">$ 1.224.000</td>
+                <td id="q_totalIntegracionCLP" class="text-right font-mono font-extrabold text-slate-900">$ 1.224.000</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -555,8 +576,8 @@
 
       <!-- PASO 5: LOGÍSTICA & FLETES -->
       <div id="pasoContenido5" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="truck" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="truck" class="w-5 h-5 text-kev-teal"></i>
           Paso 5: Logística, Viáticos de Terreno y Fletes
         </h2>
         <p class="text-xs text-slate-500 mb-4">Gastos de traslado a faena, alojamiento, viáticos, combustible y transporte de equipos.</p>
@@ -637,8 +658,8 @@
 
       <!-- PASO 6: MÁRGENES COMERCIALES -->
       <div id="pasoContenido6" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="trending-up" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="trending-up" class="w-5 h-5 text-kev-teal"></i>
           Paso 6: Definición de Márgenes y Precio de Venta
         </h2>
         <p class="text-xs text-slate-500 mb-4">Los precios se calculan con la fórmula corporativa: <code>Precio = Costo / (1 - Margen)</code>.</p>
@@ -648,41 +669,41 @@
             <div>
               <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                 <span>Margen Ingeniería (HH)</span>
-                <span id="lblMargenIngenieria" class="text-blue-600">55%</span>
+                <span id="lblMargenIngenieria" class="text-kev-teal font-bold">55%</span>
               </div>
-              <input type="range" id="sliderMargenIngenieria" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('ingenieria', this.value)" class="w-full">
+              <input type="range" id="sliderMargenIngenieria" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('ingenieria', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
               <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                 <span>Margen Integración Eléctrica</span>
-                <span id="lblMargenIntegracion" class="text-blue-600">55%</span>
+                <span id="lblMargenIntegracion" class="text-kev-teal font-bold">55%</span>
               </div>
-              <input type="range" id="sliderMargenIntegracion" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('integracion', this.value)" class="w-full">
+              <input type="range" id="sliderMargenIntegracion" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('integracion', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
               <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                 <span>Margen Equipos & Hardware</span>
-                <span id="lblMargenEquipos" class="text-blue-600">30%</span>
+                <span id="lblMargenEquipos" class="text-kev-teal font-bold">30%</span>
               </div>
-              <input type="range" id="sliderMargenEquipos" min="5" max="50" step="1" value="30" oninput="app.ajustarMargen('equipos', this.value)" class="w-full">
+              <input type="range" id="sliderMargenEquipos" min="5" max="50" step="1" value="30" oninput="app.ajustarMargen('equipos', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
               <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                 <span>Margen Fletes & Transporte</span>
-                <span id="lblMargenFlete" class="text-blue-600">10%</span>
+                <span id="lblMargenFlete" class="text-kev-teal font-bold">10%</span>
               </div>
-              <input type="range" id="sliderMargenFlete" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('flete', this.value)" class="w-full">
+              <input type="range" id="sliderMargenFlete" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('flete', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
               <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                 <span>Margen Otros (Logística/Terreno)</span>
-                <span id="lblMargenOtros" class="text-blue-600">10%</span>
+                <span id="lblMargenOtros" class="text-kev-teal font-bold">10%</span>
               </div>
-              <input type="range" id="sliderMargenOtros" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('otros', this.value)" class="w-full">
+              <input type="range" id="sliderMargenOtros" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('otros', this.value)" class="w-full accent-teal-700">
             </div>
           </div>
 
@@ -741,8 +762,8 @@
 
       <!-- PASO 7: HITOS & GARANTÍAS -->
       <div id="pasoContenido7" class="step-pane hidden">
-        <h2 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i>
+        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-kev-teal"></i>
           Paso 7: Condiciones Comerciales, Estados de Pago y Garantías Legales
         </h2>
         <p class="text-xs text-slate-500 mb-4">Configure la tabla de hitos (EP1 a EP4) y revise las cláusulas legales y de garantía KEV Process que se incluirán en el documento Word.</p>
@@ -795,7 +816,7 @@
         <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i data-lucide="edit-3" class="w-4 h-4 text-blue-600"></i>
+              <i data-lucide="edit-3" class="w-4 h-4 text-kev-teal"></i>
               Textos del Documento de Oferta (Uno por Sección según Formato KEV)
             </h3>
             <button onclick="app.restablecerTextosPropuesta()" class="btn btn-secondary text-xs py-1 px-2 text-slate-600" title="Restablecer textos estándar">
@@ -809,7 +830,7 @@
             <div class="text-section-card">
               <div class="text-section-header" onclick="app.toggleSeccionTexto('saludo')">
                 <span class="flex items-center gap-2">
-                  <i data-lucide="mail" class="w-3.5 h-3.5 text-blue-600"></i> Carta de Presentación & Saludo Inicial
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-kev-teal"></i> Carta de Presentación & Saludo Inicial
                 </span>
                 <i id="iconToggle_saludo" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
               </div>
@@ -822,7 +843,7 @@
             <div class="text-section-card">
               <div class="text-section-header" onclick="app.toggleSeccionTexto('requerimiento')">
                 <span class="flex items-center gap-2">
-                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i> 1. Requerimiento y Alcance General
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-kev-teal"></i> 1. Requerimiento y Alcance General
                 </span>
                 <i id="iconToggle_requerimiento" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
               </div>
@@ -835,7 +856,7 @@
             <div class="text-section-card">
               <div class="text-section-header" onclick="app.toggleSeccionTexto('metodologia')">
                 <span class="flex items-center gap-2">
-                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i> 2. Propuesta Técnica, Metodología y Gantt
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-kev-teal"></i> 2. Propuesta Técnica, Metodología y Gantt
                 </span>
                 <i id="iconToggle_metodologia" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
               </div>
@@ -848,7 +869,7 @@
             <div class="text-section-card">
               <div class="text-section-header" onclick="app.toggleSeccionTexto('requerimientosPrevios')">
                 <span class="flex items-center gap-2">
-                  <i data-lucide="check-square" class="w-3.5 h-3.5 text-blue-600"></i> 3. Requerimientos Previos y Obligaciones del Cliente
+                  <i data-lucide="check-square" class="w-3.5 h-3.5 text-kev-teal"></i> 3. Requerimientos Previos y Obligaciones del Cliente
                 </span>
                 <i id="iconToggle_requerimientosPrevios" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
               </div>
@@ -861,7 +882,7 @@
             <div class="text-section-card">
               <div class="text-section-header" onclick="app.toggleSeccionTexto('entregables')">
                 <span class="flex items-center gap-2">
-                  <i data-lucide="package-check" class="w-3.5 h-3.5 text-blue-600"></i> 6. Entregables al Término del Servicio
+                  <i data-lucide="package-check" class="w-3.5 h-3.5 text-kev-teal"></i> 6. Entregables al Término del Servicio
                 </span>
                 <i id="iconToggle_entregables" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
               </div>
@@ -901,7 +922,7 @@
         </div>
 
         <!-- Botones Finales de Generación -->
-        <div class="mt-6 flex justify-between items-center p-4 bg-blue-50/70 border border-blue-200 rounded-lg">
+        <div class="mt-6 flex justify-between items-center p-4 bg-teal-50/50 border border-teal-200 rounded-lg">
           <button onclick="app.irAPasoCuestionario(6)" class="btn btn-secondary">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
           </button>
@@ -963,7 +984,7 @@
               <tr class="total-row">
                 <td colspan="2" class="text-right font-extrabold">PRECIO OFERTA PROYECTO:</td>
                 <td id="gridResumenTotalCosto" class="text-right font-mono font-extrabold text-slate-800"></td>
-                <td id="gridResumenMargenTotal" class="text-right font-mono font-extrabold text-blue-700"></td>
+                <td id="gridResumenMargenTotal" class="text-right font-mono font-extrabold text-teal-800"></td>
                 <td id="gridResumenTotalPrecioCLP" class="text-right font-mono font-extrabold text-emerald-700"></td>
                 <td id="gridResumenTotalPrecioUSD" class="text-right font-mono font-extrabold text-emerald-800"></td>
               </tr>
@@ -1054,8 +1075,8 @@
         </div>
         <input type="file" id="inputXLSXFile" accept=".xlsx" class="hidden" onchange="app.procesarArchivoXLSX(event)">
 
-        <div id="infoImportando" class="hidden p-3 bg-blue-50 text-blue-800 rounded text-xs flex items-center gap-2 font-semibold">
-          <i data-lucide="loader" class="w-4 h-4 animate-spin text-blue-600"></i>
+        <div id="infoImportando" class="hidden p-3 bg-teal-50 text-teal-800 rounded text-xs flex items-center gap-2 font-semibold">
+          <i data-lucide="loader" class="w-4 h-4 animate-spin text-kev-teal"></i>
           <span>Analizando y cargando datos de la planilla...</span>
         </div>
       </div>
@@ -1070,7 +1091,7 @@
     <div class="modal-content" style="max-width: 850px;">
       <div class="modal-header">
         <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
+          <i data-lucide="settings" class="w-4 h-4 text-kev-teal"></i>
           Configuración de Tarifas y Catálogo Personalizado (Persistente)
         </h3>
         <button onclick="app.cerrarModalConfiguracion()" class="text-slate-400 hover:text-slate-600">
@@ -1080,7 +1101,7 @@
       <div class="modal-body space-y-4">
         <!-- Selector de Pestaña de Configuración -->
         <div class="flex gap-2 border-b pb-2 text-xs overflow-x-auto">
-          <button id="btnTabCfgHH" class="px-3 py-1 font-bold rounded bg-blue-100 text-blue-900" onclick="app.setTabConfig('hh')">
+          <button id="btnTabCfgHH" class="px-3 py-1 font-bold rounded bg-teal-50 text-teal-800 border border-teal-200" onclick="app.setTabConfig('hh')">
             Tarifas de HH
           </button>
           <button id="btnTabCfgLogistica" class="px-3 py-1 font-semibold rounded bg-slate-100 text-slate-700" onclick="app.setTabConfig('logistica')">
