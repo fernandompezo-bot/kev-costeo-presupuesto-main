@@ -616,14 +616,18 @@ class KEVPresupuestoApp {
       totalHH += hh;
       costoIngenieria += hh * cu;
     });
-    const precioIngenieria = Math.round(costoIngenieria / (1 - margenes.ingenieria));
+    const divisorIng = Math.max(0.0001, 1 - (margenes.ingenieria ?? 0.55));
+    const precioIngenieria = Math.round(costoIngenieria / divisorIng);
 
     // 2. Adicionales
     let costoAdicionales = 0;
     p.adicionales.forEach(row => {
-      costoAdicionales += Number(row.costo) || 0;
+      const cant = Number(row.cantidad || 1);
+      const cu = Number(row.costoUnitario !== undefined ? row.costoUnitario : (row.costo || 0));
+      costoAdicionales += cant * cu;
     });
-    const precioAdicionales = Math.round(costoAdicionales / (1 - margenes.adicionales));
+    const divisorAdic = Math.max(0.0001, 1 - (margenes.adicionales ?? 0.3));
+    const precioAdicionales = Math.round(costoAdicionales / divisorAdic);
 
     // 3. Integración Eléctrica
     let costoIntegracion = 0;
@@ -632,11 +636,13 @@ class KEVPresupuestoApp {
       const cu = Number(row.costoUnitario) || 0;
       costoIntegracion += cant * cu;
     });
-    const precioIntegracion = Math.round(costoIntegracion / (1 - margenes.integracion));
+    const divisorInt = Math.max(0.0001, 1 - (margenes.integracion ?? 0.55));
+    const precioIntegracion = Math.round(costoIntegracion / divisorInt);
 
     // 4. Equipos
     let costoEquipos = 0;
     let precioEquipos = 0;
+    const divisorEq = Math.max(0.0001, 1 - (margenes.equipos ?? 0.3));
     p.equipos.forEach(eq => {
       const cant = Number(eq.cantidad) || 0;
       let costoUnitCLP = 0;
@@ -652,7 +658,7 @@ class KEVPresupuestoApp {
 
       const totalFilaCosto = costoUnitCLP * cant;
       costoEquipos += totalFilaCosto;
-      precioEquipos += Math.round(costoUnitCLP / (1 - margenes.equipos)) * cant;
+      precioEquipos += Math.round(costoUnitCLP / divisorEq) * cant;
     });
 
     // 5. Flete
@@ -662,7 +668,8 @@ class KEVPresupuestoApp {
       const cu = Number(fl.costoUnitario) || 0;
       costoFlete += cant * cu;
     });
-    const precioFlete = Math.round(costoFlete / (1 - margenes.flete));
+    const divisorFl = Math.max(0.0001, 1 - (margenes.flete ?? 0.1));
+    const precioFlete = Math.round(costoFlete / divisorFl);
 
     // 6. Montaje
     let costoMontaje = 0;
@@ -671,7 +678,8 @@ class KEVPresupuestoApp {
       const cu = Number(m.costoUnitario) || 0;
       costoMontaje += cant * cu;
     });
-    const precioMontaje = Math.round(costoMontaje / (1 - margenes.montaje));
+    const divisorMont = Math.max(0.0001, 1 - (margenes.montaje ?? 0.3));
+    const precioMontaje = Math.round(costoMontaje / divisorMont);
 
     // 7. Otros (Logística/Terreno)
     let costoOtros = 0;
@@ -680,7 +688,8 @@ class KEVPresupuestoApp {
       const cu = Number(ot.costoUnitario) || 0;
       costoOtros += cant * cu;
     });
-    const precioOtros = Math.round(costoOtros / (1 - margenes.otros));
+    const divisorOt = Math.max(0.0001, 1 - (margenes.otros ?? 0.1));
+    const precioOtros = Math.round(costoOtros / divisorOt);
 
     // Consolidado Total Proyecto
     const costoTotalProyecto = costoIngenieria + costoAdicionales + costoIntegracion + costoEquipos + costoFlete + costoMontaje + costoOtros;
@@ -763,7 +772,9 @@ class KEVPresupuestoApp {
     this.actualizarSlidersMargen();
     this.setElemText('resumenEquiposVenta', this.fmtCLP(calc.precioEquipos));
     this.setElemText('resumenIngenieriaVenta', this.fmtCLP(calc.precioIngenieria + calc.precioIntegracion));
-    this.setElemText('resumenLogisticaVenta', this.fmtCLP(calc.precioFlete + calc.precioOtros + calc.precioMontaje));
+    this.setElemText('resumenAdicionalesVenta', this.fmtCLP(calc.precioAdicionales));
+    this.setElemText('resumenMontajeVenta', this.fmtCLP(calc.precioMontaje));
+    this.setElemText('resumenLogisticaVenta', this.fmtCLP(calc.precioFlete + calc.precioOtros));
     this.setElemText('resumenTotalVentaCLP', this.fmtCLP(calc.precioTotalProyecto));
     this.setElemText('resumenTotalVentaUSD', `$ ${calc.precioTotalUSD.toLocaleString('es-CL')} USD`);
     this.setElemText('resumenMargenGlobal', `${(calc.margenConsolidado * 100).toFixed(1)}%`);
@@ -1081,20 +1092,26 @@ class KEVPresupuestoApp {
 
   actualizarSlidersMargen() {
     const m = this.proyecto.margenes;
-    this.setElemVal('sliderMargenIngenieria', Math.round(m.ingenieria * 100));
-    this.setElemText('lblMargenIngenieria', `${Math.round(m.ingenieria * 100)}%`);
+    this.setElemVal('sliderMargenIngenieria', Math.round((m.ingenieria ?? 0.55) * 100));
+    this.setElemText('lblMargenIngenieria', `${Math.round((m.ingenieria ?? 0.55) * 100)}%`);
 
-    this.setElemVal('sliderMargenIntegracion', Math.round(m.integracion * 100));
-    this.setElemText('lblMargenIntegracion', `${Math.round(m.integracion * 100)}%`);
+    this.setElemVal('sliderMargenAdicionales', Math.round((m.adicionales ?? 0.30) * 100));
+    this.setElemText('lblMargenAdicionales', `${Math.round((m.adicionales ?? 0.30) * 100)}%`);
 
-    this.setElemVal('sliderMargenEquipos', Math.round(m.equipos * 100));
-    this.setElemText('lblMargenEquipos', `${Math.round(m.equipos * 100)}%`);
+    this.setElemVal('sliderMargenIntegracion', Math.round((m.integracion ?? 0.55) * 100));
+    this.setElemText('lblMargenIntegracion', `${Math.round((m.integracion ?? 0.55) * 100)}%`);
 
-    this.setElemVal('sliderMargenFlete', Math.round(m.flete * 100));
-    this.setElemText('lblMargenFlete', `${Math.round(m.flete * 100)}%`);
+    this.setElemVal('sliderMargenEquipos', Math.round((m.equipos ?? 0.30) * 100));
+    this.setElemText('lblMargenEquipos', `${Math.round((m.equipos ?? 0.30) * 100)}%`);
 
-    this.setElemVal('sliderMargenOtros', Math.round(m.otros * 100));
-    this.setElemText('lblMargenOtros', `${Math.round(m.otros * 100)}%`);
+    this.setElemVal('sliderMargenFlete', Math.round((m.flete ?? 0.10) * 100));
+    this.setElemText('lblMargenFlete', `${Math.round((m.flete ?? 0.10) * 100)}%`);
+
+    this.setElemVal('sliderMargenMontaje', Math.round((m.montaje ?? 0.30) * 100));
+    this.setElemText('lblMargenMontaje', `${Math.round((m.montaje ?? 0.30) * 100)}%`);
+
+    this.setElemVal('sliderMargenOtros', Math.round((m.otros ?? 0.10) * 100));
+    this.setElemText('lblMargenOtros', `${Math.round((m.otros ?? 0.10) * 100)}%`);
   }
 
   ajustarMargen(categoria, valPct) {
@@ -1151,7 +1168,9 @@ class KEVPresupuestoApp {
   setExcelTab(nombreTab) {
     this.tabExcelActual = nombreTab;
     document.querySelectorAll('.excel-tab').forEach(b => {
-      b.classList.toggle('active', b.textContent.trim() === nombreTab);
+      const target = b.getAttribute('data-tab') || b.textContent.trim();
+      const isActive = target === nombreTab || (nombreTab === 'Listado' && (target === 'Listado de Equipos' || target === 'Listado (Cliente)'));
+      b.classList.toggle('active', isActive);
     });
     this.renderModoDesarrollo();
   }
@@ -1216,7 +1235,18 @@ class KEVPresupuestoApp {
   renderGridGenerico(nombreTab, calc) {
     const titulo = document.getElementById('tituloTabGenerico');
     const cont = document.getElementById('contenedorTabGenerico');
-    titulo.textContent = `Pestaña: ${nombreTab}`;
+    const btnAgregar = document.getElementById('btnAgregarFilaTabGenerico');
+    const accionesListado = document.getElementById('accionesListadoEquipos');
+
+    if (nombreTab === 'Listado') {
+      if (titulo) titulo.textContent = 'Pestaña: Listado de Equipos';
+      if (btnAgregar) btnAgregar.classList.add('hidden');
+      if (accionesListado) accionesListado.classList.remove('hidden');
+    } else {
+      if (titulo) titulo.textContent = `Pestaña: ${nombreTab}`;
+      if (btnAgregar) btnAgregar.classList.remove('hidden');
+      if (accionesListado) accionesListado.classList.add('hidden');
+    }
 
     if (nombreTab === 'Ingeniería y Planificación') {
       cont.innerHTML = `
@@ -1304,14 +1334,27 @@ class KEVPresupuestoApp {
         </table>
       `;
     } else if (nombreTab === 'Listado') {
+      const divisorEq = Math.max(0.0001, 1 - (this.proyecto.margenes.equipos ?? 0.3));
       cont.innerHTML = `
-        <div class="mb-2 text-xs text-slate-500 font-semibold">Lista de Suministro para Cliente (con Márgenes Aplicados):</div>
+        <div class="flex justify-between items-center mb-3">
+          <div class="text-xs text-slate-500 font-semibold">Lista Oficial de Suministro para Cliente (con Márgenes Aplicados):</div>
+          <div class="flex gap-2">
+            <button onclick="app.exportarListadoEquiposXLSX()" class="btn btn-success text-xs flex items-center gap-1.5" title="Exportar listado a archivo Excel (.xlsx)">
+              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Descargar XLSX
+            </button>
+            <button onclick="app.exportarListadoEquiposPDF()" class="btn btn-primary text-xs flex items-center gap-1.5" title="Exportar listado a PDF o Imprimir">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i> Exportar PDF
+            </button>
+          </div>
+        </div>
         <table class="excel-table">
           <thead>
             <tr>
-              <th style="width: 40px;">N°</th>
+              <th style="width: 40px; text-align: center;">N°</th>
+              <th style="width: 140px;">CÓDIGO SIEMENS</th>
               <th>DESCRIPCIÓN</th>
               <th style="width: 60px;" class="text-right">CANT.</th>
+              <th style="width: 60px;" class="text-center">UNIDAD</th>
               <th style="width: 140px;" class="text-right">VALOR VENTA UNIT.</th>
               <th style="width: 150px;" class="text-right">VALOR VENTA TOTAL</th>
             </tr>
@@ -1326,12 +1369,14 @@ class KEVPresupuestoApp {
               } else {
                 cuCLP = Number(eq.costoCLP) || 0;
               }
-              const ventaUnit = Math.round(cuCLP / (1 - this.proyecto.margenes.equipos));
+              const ventaUnit = Math.round(cuCLP / divisorEq);
               return `
                 <tr>
                   <td class="font-mono text-xs text-center">${i + 1}</td>
-                  <td class="font-semibold text-xs text-slate-800">${eq.codigo} - ${eq.descripcion}</td>
+                  <td class="font-mono font-bold text-xs text-slate-700">${eq.codigo || ''}</td>
+                  <td class="font-semibold text-xs text-slate-800">${eq.descripcion || ''}</td>
                   <td class="text-right font-mono text-xs">${cant}</td>
+                  <td class="text-center font-mono text-xs text-slate-500">C/U</td>
                   <td class="text-right font-mono text-xs">${this.fmtCLP(ventaUnit)}</td>
                   <td class="text-right font-mono font-bold text-xs text-slate-900">${this.fmtCLP(ventaUnit * cant)}</td>
                 </tr>
@@ -1340,7 +1385,7 @@ class KEVPresupuestoApp {
           </tbody>
           <tfoot>
             <tr class="total-row">
-              <td colspan="4" class="text-right font-bold">TOTAL VENTA EQUIPOS:</td>
+              <td colspan="6" class="text-right font-bold">TOTAL VENTA EQUIPOS:</td>
               <td class="text-right font-mono font-extrabold text-emerald-800">${this.fmtCLP(calc.precioEquipos)}</td>
             </tr>
           </tfoot>
@@ -1352,7 +1397,12 @@ class KEVPresupuestoApp {
       else if (nombreTab === 'Flete') dataArray = this.proyecto.flete;
       else if (nombreTab === 'Montaje') dataArray = this.proyecto.montaje;
       else if (nombreTab === 'Otros') dataArray = this.proyecto.otros;
-      else if (nombreTab === 'Adicionales') dataArray = this.proyecto.adicionales;
+      else if (nombreTab === 'Adicionales') {
+        if (!this.proyecto.adicionales) this.proyecto.adicionales = [];
+        dataArray = this.proyecto.adicionales;
+      }
+
+      const totalTab = dataArray.reduce((acc, r) => acc + (Number(r.cantidad !== undefined ? r.cantidad : 1) * Number(r.costoUnitario !== undefined ? r.costoUnitario : (r.costo || 0))), 0);
 
       cont.innerHTML = `
         <table class="excel-table">
@@ -1360,24 +1410,33 @@ class KEVPresupuestoApp {
             <tr>
               <th style="width: 70px;">ITEM</th>
               <th>DESCRIPCIÓN</th>
-              <th style="width: 80px;">UNIDAD</th>
+              <th style="width: 80px;" class="text-center">UNIDAD</th>
               <th style="width: 100px;" class="text-right">CANTIDAD</th>
               <th style="width: 140px;" class="text-right">COSTO UNIT.</th>
               <th style="width: 150px;" class="text-right">TOTAL</th>
+              <th style="width: 45px;" class="text-center">ACCIÓN</th>
             </tr>
           </thead>
           <tbody>
             ${dataArray.map((r, i) => `
               <tr>
                 <td class="font-mono text-xs">${r.item || r.id || (i + 1)}</td>
-                <td><input type="text" value="${r.descripcion}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'descripcion', this.value)" class="text-xs"></td>
-                <td class="text-center font-mono text-xs">${r.unidad || 'C/U'}</td>
-                <td><input type="number" value="${r.cantidad || 1}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'cantidad', this.value)" class="text-right font-mono text-xs"></td>
-                <td><input type="number" value="${r.costoUnitario || r.costo || 0}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'costoUnitario', this.value)" class="text-right font-mono text-xs"></td>
-                <td class="text-right font-mono font-bold text-xs">${this.fmtCLP((r.cantidad || 1) * (r.costoUnitario || r.costo || 0))}</td>
+                <td><input type="text" value="${r.descripcion || ''}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'descripcion', this.value)" class="text-xs"></td>
+                <td class="text-center font-mono text-xs"><input type="text" value="${r.unidad || 'C/U'}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'unidad', this.value)" class="text-center font-mono text-xs w-full"></td>
+                <td><input type="number" value="${r.cantidad !== undefined ? r.cantidad : 1}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'cantidad', this.value)" class="text-right font-mono text-xs"></td>
+                <td><input type="number" value="${r.costoUnitario !== undefined ? r.costoUnitario : (r.costo || 0)}" onchange="app.actualizarFilaGenerica('${nombreTab}', ${i}, 'costoUnitario', this.value)" class="text-right font-mono text-xs"></td>
+                <td class="text-right font-mono font-bold text-xs">${this.fmtCLP((Number(r.cantidad !== undefined ? r.cantidad : 1)) * (Number(r.costoUnitario !== undefined ? r.costoUnitario : (r.costo || 0))))}</td>
+                <td class="text-center"><button onclick="app.eliminarFilaGenerica('${nombreTab}', ${i})" class="text-red-500 hover:text-red-700 font-bold text-sm leading-none" title="Eliminar fila">&times;</button></td>
               </tr>
             `).join('')}
           </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="5" class="text-right font-bold">TOTAL ${nombreTab.toUpperCase()}:</td>
+              <td class="text-right font-mono font-extrabold text-slate-900">${this.fmtCLP(totalTab)}</td>
+              <td></td>
+            </tr>
+          </tfoot>
         </table>
       `;
     }
@@ -1516,7 +1575,12 @@ class KEVPresupuestoApp {
     else if (nombreTab === 'Adicionales') arr = this.proyecto.adicionales;
 
     if (arr && arr[idx]) {
-      if (campo === 'cantidad' || campo === 'costoUnitario') valor = Number(valor) || 0;
+      if (campo === 'cantidad' || campo === 'costoUnitario') {
+        valor = Number(valor) || 0;
+        if (campo === 'costoUnitario' && nombreTab === 'Adicionales') {
+          arr[idx].costo = valor;
+        }
+      }
       arr[idx][campo] = valor;
       this.render();
     }
@@ -1524,18 +1588,52 @@ class KEVPresupuestoApp {
 
   agregarFilaTabActual() {
     const tab = this.tabExcelActual;
-    if (tab === 'Ingeniería y Planificación') this.agregarFilaIngenieria();
-    else if (tab === 'Equipos') this.agregarFilaEquipo();
-    else if (tab === 'Integración Eléctrica') this.agregarFilaIntegracion();
-    else if (tab === 'Flete') {
+    if (tab === 'Ingeniería y Planificación') {
+      this.agregarFilaIngenieria();
+    } else if (tab === 'Equipos') {
+      this.agregarFilaEquipo();
+    } else if (tab === 'Integración Eléctrica') {
+      this.agregarFilaIntegracion();
+    } else if (tab === 'Adicionales') {
+      if (!this.proyecto.adicionales) this.proyecto.adicionales = [];
+      const num = this.proyecto.adicionales.length + 1;
+      this.proyecto.adicionales.push({
+        item: `2.0${num}`,
+        descripcion: "Nuevo adicional",
+        unidad: "GL",
+        cantidad: 1,
+        costoUnitario: 50000,
+        costo: 50000
+      });
+      this.render();
+      this.showToast("Fila agregada a Adicionales", "success");
+    } else if (tab === 'Flete') {
       this.proyecto.flete.push({ item: `5.0${this.proyecto.flete.length + 1}`, descripcion: "Nuevo flete", unidad: "C/U", cantidad: 1, costoUnitario: 100000 });
       this.render();
+      this.showToast("Fila agregada a Flete", "success");
     } else if (tab === 'Montaje') {
       this.proyecto.montaje.push({ item: `6.0${this.proyecto.montaje.length + 1}`, descripcion: "Nuevo montaje", unidad: "C/U", cantidad: 1, costoUnitario: 200000 });
       this.render();
+      this.showToast("Fila agregada a Montaje", "success");
     } else if (tab === 'Otros') {
       this.proyecto.otros.push({ item: `7.0${this.proyecto.otros.length + 1}`, descripcion: "Nuevo gasto terreno", unidad: "C/U", cantidad: 1, costoUnitario: 50000 });
       this.render();
+      this.showToast("Fila agregada a Otros", "success");
+    }
+  }
+
+  eliminarFilaGenerica(nombreTab, idx) {
+    let arr = null;
+    if (nombreTab === 'Integración Eléctrica') arr = this.proyecto.integracionElectrica;
+    else if (nombreTab === 'Flete') arr = this.proyecto.flete;
+    else if (nombreTab === 'Montaje') arr = this.proyecto.montaje;
+    else if (nombreTab === 'Otros') arr = this.proyecto.otros;
+    else if (nombreTab === 'Adicionales') arr = this.proyecto.adicionales;
+
+    if (arr && arr[idx] !== undefined) {
+      arr.splice(idx, 1);
+      this.render();
+      this.showToast("Fila eliminada", "info");
     }
   }
 
@@ -2390,6 +2488,273 @@ ${hitosTexto}
     } catch (err) {
       console.error("Error al exportar XLSX:", err);
       alert("Error al exportar planilla Excel: " + err.message);
+    }
+  }
+
+  // =========================================================================
+  // EXPORTACIÓN DE LISTADO DE EQUIPOS (XLSX Y PDF)
+  // =========================================================================
+  async exportarListadoEquiposXLSX() {
+    try {
+      if (!window.ExcelJS) {
+        throw new Error("Biblioteca ExcelJS no disponible");
+      }
+      const p = this.proyecto;
+      const calc = this.calcularTotales();
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'KEV Process SpA';
+      wb.created = new Date();
+
+      const ws = wb.addWorksheet('Listado de Equipos');
+      ws.views = [{ showGridLines: true }];
+
+      // Anchos de columna
+      ws.columns = [
+        { width: 6 },   // A: N°
+        { width: 24 },  // B: Código Siemens
+        { width: 48 },  // C: Descripción
+        { width: 10 },  // D: Cantidad
+        { width: 10 },  // E: Unidad
+        { width: 20 },  // F: Valor Venta Unit.
+        { width: 22 }   // G: Valor Venta Total
+      ];
+
+      const azulNaval = 'FF0B1121';
+      const tealKev = 'FF1D6A6E';
+      const fontHeader = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+
+      // Encabezado corporativo KEV Process SpA
+      ws.mergeCells('A1:G1');
+      const c1 = ws.getCell('A1');
+      c1.value = 'KEV PROCESS SpA — LISTADO OFICIAL DE EQUIPOS Y SUMINISTROS';
+      c1.font = { name: 'Calibri', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
+      c1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: azulNaval } };
+      c1.alignment = { vertical: 'middle', horizontal: 'center' };
+      ws.getRow(1).height = 28;
+
+      // Metadatos del proyecto
+      ws.getCell('A3').value = 'Proyecto:';
+      ws.getCell('A3').font = { bold: true, size: 10 };
+      ws.getCell('B3').value = p.nombreProyecto || p.titulo || 'N/A';
+      ws.getCell('B3').font = { size: 10 };
+
+      ws.getCell('E3').value = 'Correlativo:';
+      ws.getCell('E3').font = { bold: true, size: 10 };
+      ws.getCell('F3').value = p.correlativo || 'N/A';
+      ws.getCell('F3').font = { bold: true, size: 10, color: { argb: 'FF1D6A6E' } };
+
+      ws.getCell('A4').value = 'Cliente:';
+      ws.getCell('A4').font = { bold: true, size: 10 };
+      ws.getCell('B4').value = p.cliente || 'N/A';
+      ws.getCell('B4').font = { size: 10 };
+
+      ws.getCell('E4').value = 'Fecha:';
+      ws.getCell('E4').font = { bold: true, size: 10 };
+      ws.getCell('F4').value = new Date().toLocaleDateString('es-CL');
+      ws.getCell('F4').font = { size: 10 };
+
+      // Encabezados de tabla
+      const headers = ['N°', 'CÓDIGO SIEMENS', 'DESCRIPCIÓN DEL EQUIPO', 'CANT.', 'UNIDAD', 'VALOR VENTA UNIT.', 'VALOR VENTA TOTAL'];
+      const rowHeader = ws.getRow(6);
+      rowHeader.height = 22;
+      headers.forEach((h, idx) => {
+        const cell = rowHeader.getCell(idx + 1);
+        cell.value = h;
+        cell.font = fontHeader;
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: tealKev } };
+        cell.alignment = { vertical: 'middle', horizontal: idx === 0 || idx === 3 || idx === 4 ? 'center' : (idx >= 5 ? 'right' : 'left') };
+      });
+
+      let rIdx = 7;
+      const divisorEq = Math.max(0.0001, 1 - (p.margenes.equipos ?? 0.3));
+
+      p.equipos.forEach((eq, i) => {
+        const cant = Number(eq.cantidad) || 0;
+        let cuCLP = 0;
+        if (eq.listaUSD > 0) {
+          const desc = (KEV_MAESTROS.descuentosSiemens[eq.grupo] || { descuento: 0 }).descuento;
+          cuCLP = Math.round(eq.listaUSD * (1 - desc) * p.dolar);
+        } else {
+          cuCLP = Number(eq.costoCLP) || 0;
+        }
+        const ventaUnit = Math.round(cuCLP / divisorEq);
+        const row = ws.getRow(rIdx);
+        row.height = 20;
+
+        row.getCell(1).value = i + 1;
+        row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(2).value = eq.codigo || '';
+        row.getCell(2).font = { name: 'Consolas', size: 9, bold: true };
+        row.getCell(3).value = eq.descripcion || '';
+        row.getCell(4).value = cant;
+        row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(5).value = 'C/U';
+        row.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+        row.getCell(6).value = ventaUnit;
+        row.getCell(6).numFmt = '$ #,##0';
+        row.getCell(7).value = { formula: `D${rIdx}*F${rIdx}`, result: ventaUnit * cant };
+        row.getCell(7).numFmt = '$ #,##0';
+        row.getCell(7).font = { bold: true };
+
+        rIdx++;
+      });
+
+      // Fila de Total
+      const rTotal = ws.getRow(rIdx);
+      rTotal.height = 24;
+      ws.mergeCells(`A${rIdx}:E${rIdx}`);
+      rTotal.getCell(1).value = 'TOTAL VENTA SUMINISTRO EQUIPOS (CLP NETO):';
+      rTotal.getCell(1).font = { bold: true, size: 10 };
+      rTotal.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+      rTotal.getCell(7).value = { formula: `SUM(G7:G${rIdx - 1})`, result: calc.precioEquipos };
+      rTotal.getCell(7).numFmt = '$ #,##0';
+      rTotal.getCell(7).font = { bold: true, size: 11, color: { argb: 'FF047857' } };
+
+      // Bordes
+      for (let r = 6; r <= rIdx; r++) {
+        for (let c = 1; c <= 7; c++) {
+          ws.getRow(r).getCell(c).border = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+          };
+        }
+      }
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const filename = `Listado_Equipos_${p.correlativo || 'PROYECTO'}.xlsx`;
+      saveAs(blob, filename);
+      this.showToast("Listado de Equipos exportado en Excel (.xlsx)", "success");
+    } catch (err) {
+      console.error("Error al exportar Listado de Equipos XLSX:", err);
+      alert("Error al exportar Listado de Equipos: " + err.message);
+    }
+  }
+
+  exportarListadoEquiposPDF() {
+    try {
+      const p = this.proyecto;
+      const calc = this.calcularTotales();
+      const fecha = new Date().toLocaleDateString('es-CL');
+      const divisorEq = Math.max(0.0001, 1 - (p.margenes.equipos ?? 0.3));
+
+      const filasHtml = p.equipos.map((eq, i) => {
+        const cant = Number(eq.cantidad) || 0;
+        let cuCLP = 0;
+        if (eq.listaUSD > 0) {
+          const desc = (KEV_MAESTROS.descuentosSiemens[eq.grupo] || { descuento: 0 }).descuento;
+          cuCLP = Math.round(eq.listaUSD * (1 - desc) * p.dolar);
+        } else {
+          cuCLP = Number(eq.costoCLP) || 0;
+        }
+        const ventaUnit = Math.round(cuCLP / divisorEq);
+        const totalFila = ventaUnit * cant;
+
+        return `
+          <tr>
+            <td style="text-align:center; padding: 6px 8px; border: 1px solid #cbd5e1; font-family: monospace;">${i + 1}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #0f172a;">${eq.codigo || ''}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">${eq.descripcion || ''}</td>
+            <td style="text-align:center; padding: 6px 8px; border: 1px solid #cbd5e1; font-family: monospace;">${cant}</td>
+            <td style="text-align:center; padding: 6px 8px; border: 1px solid #cbd5e1;">C/U</td>
+            <td style="text-align:right; padding: 6px 8px; border: 1px solid #cbd5e1; font-family: monospace;">${this.fmtCLP(ventaUnit)}</td>
+            <td style="text-align:right; padding: 6px 8px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #047857;">${this.fmtCLP(totalFila)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        alert("Por favor permita las ventanas emergentes (pop-ups) para generar el PDF.");
+        return;
+      }
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <title>Listado de Equipos - ${p.correlativo || 'KEV Process'}</title>
+          <style>
+            @page { size: letter landscape; margin: 12mm; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 0; padding: 15px; font-size: 11px; }
+            .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1D6A6E; padding-bottom: 10px; margin-bottom: 12px; }
+            .header-bar h1 { margin: 0; font-size: 16px; color: #0B1121; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+            .header-bar p { margin: 2px 0 0; font-size: 10px; color: #64748b; }
+            .meta-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 14px; font-size: 10.5px; }
+            .meta-item strong { display: block; color: #64748b; font-size: 8.5px; text-transform: uppercase; margin-bottom: 2px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+            th { background: #1D6A6E; color: white; padding: 7px 8px; border: 1px solid #155457; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            tfoot td { background: #f1f5f9; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
+            .footer-bar { margin-top: 20px; display: flex; justify-content: space-between; font-size: 8.5px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-bar">
+            <div>
+              <h1>Listado Oficial de Equipos & Suministros</h1>
+              <p>KEV Process SpA • Automatización & Control de Procesos Industriales</p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 13px; color: #1D6A6E;">${p.correlativo || '101-2026'}</div>
+              <div style="font-size: 9.5px; color: #64748b;">Fecha Emisión: ${fecha}</div>
+            </div>
+          </div>
+
+          <div class="meta-box">
+            <div class="meta-item"><strong>Cliente</strong> ${p.cliente || 'N/A'}</div>
+            <div class="meta-item"><strong>Proyecto</strong> ${p.nombreProyecto || p.titulo || 'N/A'}</div>
+            <div class="meta-item"><strong>Faena / Planta</strong> ${p.faenaPlanta || 'N/A'}</div>
+            <div class="meta-item"><strong>Validez de Oferta</strong> ${p.validezOferta || '30 días'}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 35px; text-align: center;">N°</th>
+                <th style="width: 140px; text-align: left;">Código Siemens</th>
+                <th style="text-align: left;">Descripción del Equipo</th>
+                <th style="width: 50px; text-align: center;">Cant.</th>
+                <th style="width: 50px; text-align: center;">Unidad</th>
+                <th style="width: 120px; text-align: right;">Venta Unit. CLP</th>
+                <th style="width: 130px; text-align: right;">Venta Total CLP</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filasHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" style="text-align: right; font-size: 10px;">TOTAL VENTA SUMINISTRO EQUIPOS (CLP NETO):</td>
+                <td style="text-align: right; color: #047857; font-size: 12px; font-family: monospace;">${this.fmtCLP(calc.precioEquipos)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="footer-bar">
+            <span>KEV Process SpA • Av. del Valle Norte 961, Huechuraba, Santiago • www.kevprocess.com</span>
+            <span>Documento Oficial de Suministro</span>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+      this.showToast("Generando vista de impresión PDF", "info");
+    } catch (err) {
+      console.error("Error al exportar Listado de Equipos PDF:", err);
+      alert("Error al generar vista PDF: " + err.message);
     }
   }
 

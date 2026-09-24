@@ -767,7 +767,15 @@
                 <span>Margen Ingeniería (HH)</span>
                 <span id="lblMargenIngenieria" class="text-kev-teal font-bold">55%</span>
               </div>
-              <input type="range" id="sliderMargenIngenieria" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('ingenieria', this.value)" class="w-full accent-teal-700">
+              <input type="range" id="sliderMargenIngenieria" min="0" max="100" step="1" value="55" oninput="app.ajustarMargen('ingenieria', this.value)" class="w-full accent-teal-700">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Adicionales</span>
+                <span id="lblMargenAdicionales" class="text-kev-teal font-bold">30%</span>
+              </div>
+              <input type="range" id="sliderMargenAdicionales" min="0" max="100" step="1" value="30" oninput="app.ajustarMargen('adicionales', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
@@ -775,7 +783,7 @@
                 <span>Margen Integración Eléctrica</span>
                 <span id="lblMargenIntegracion" class="text-kev-teal font-bold">55%</span>
               </div>
-              <input type="range" id="sliderMargenIntegracion" min="10" max="70" step="1" value="55" oninput="app.ajustarMargen('integracion', this.value)" class="w-full accent-teal-700">
+              <input type="range" id="sliderMargenIntegracion" min="0" max="100" step="1" value="55" oninput="app.ajustarMargen('integracion', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
@@ -783,7 +791,7 @@
                 <span>Margen Equipos & Hardware</span>
                 <span id="lblMargenEquipos" class="text-kev-teal font-bold">30%</span>
               </div>
-              <input type="range" id="sliderMargenEquipos" min="5" max="50" step="1" value="30" oninput="app.ajustarMargen('equipos', this.value)" class="w-full accent-teal-700">
+              <input type="range" id="sliderMargenEquipos" min="0" max="100" step="1" value="30" oninput="app.ajustarMargen('equipos', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
@@ -791,7 +799,15 @@
                 <span>Margen Fletes & Transporte</span>
                 <span id="lblMargenFlete" class="text-kev-teal font-bold">10%</span>
               </div>
-              <input type="range" id="sliderMargenFlete" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('flete', this.value)" class="w-full accent-teal-700">
+              <input type="range" id="sliderMargenFlete" min="0" max="100" step="1" value="10" oninput="app.ajustarMargen('flete', this.value)" class="w-full accent-teal-700">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                <span>Margen Montaje y Puesta en Marcha</span>
+                <span id="lblMargenMontaje" class="text-kev-teal font-bold">30%</span>
+              </div>
+              <input type="range" id="sliderMargenMontaje" min="0" max="100" step="1" value="30" oninput="app.ajustarMargen('montaje', this.value)" class="w-full accent-teal-700">
             </div>
 
             <div>
@@ -799,7 +815,7 @@
                 <span>Margen Otros (Logística/Terreno)</span>
                 <span id="lblMargenOtros" class="text-kev-teal font-bold">10%</span>
               </div>
-              <input type="range" id="sliderMargenOtros" min="0" max="30" step="1" value="10" oninput="app.ajustarMargen('otros', this.value)" class="w-full accent-teal-700">
+              <input type="range" id="sliderMargenOtros" min="0" max="100" step="1" value="10" oninput="app.ajustarMargen('otros', this.value)" class="w-full accent-teal-700">
             </div>
           </div>
 
@@ -818,7 +834,15 @@
                   <span id="resumenIngenieriaVenta" class="font-mono font-bold">$ 11.040.000</span>
                 </div>
                 <div class="flex justify-between py-1 border-b">
-                  <span class="text-slate-600">Logística, Flete y Terreno:</span>
+                  <span class="text-slate-600">Adicionales:</span>
+                  <span id="resumenAdicionalesVenta" class="font-mono font-bold">$ 0</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                  <span class="text-slate-600">Montaje y Terreno:</span>
+                  <span id="resumenMontajeVenta" class="font-mono font-bold">$ 0</span>
+                </div>
+                <div class="flex justify-between py-1 border-b">
+                  <span class="text-slate-600">Flete y Logística:</span>
                   <span id="resumenLogisticaVenta" class="font-mono font-bold">$ 1.700.000</span>
                 </div>
                 <div class="flex justify-between py-2 border-b-2 border-slate-800 text-sm font-bold">
@@ -1052,7 +1076,7 @@
         <button class="excel-tab" onclick="app.setExcelTab('Flete')">Flete</button>
         <button class="excel-tab" onclick="app.setExcelTab('Montaje')">Montaje</button>
         <button class="excel-tab" onclick="app.setExcelTab('Otros')">Otros (Logística)</button>
-        <button class="excel-tab" onclick="app.setExcelTab('Listado')">Listado (Cliente)</button>
+        <button class="excel-tab" data-tab="Listado" onclick="app.setExcelTab('Listado')">Listado de Equipos</button>
       </div>
 
       <!-- Contenedor de Grilla Matricial -->
@@ -1110,9 +1134,19 @@
         <div id="tabGrid_Generico" class="hidden">
           <div class="flex justify-between items-center mb-3">
             <h3 id="tituloTabGenerico" class="text-sm font-bold text-slate-800"></h3>
-            <button onclick="app.agregarFilaTabActual()" class="btn btn-secondary text-xs">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Fila
-            </button>
+            <div class="flex items-center gap-2">
+              <button id="btnAgregarFilaTabGenerico" onclick="app.agregarFilaTabActual()" class="btn btn-secondary text-xs flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Fila
+              </button>
+              <div id="accionesListadoEquipos" class="hidden flex items-center gap-2">
+                <button onclick="app.exportarListadoEquiposXLSX()" class="btn btn-success text-xs flex items-center gap-1.5" title="Exportar listado a archivo Excel (.xlsx)">
+                  <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Exportar XLSX
+                </button>
+                <button onclick="app.exportarListadoEquiposPDF()" class="btn btn-primary text-xs flex items-center gap-1.5" title="Exportar listado a PDF o Imprimir">
+                  <i data-lucide="printer" class="w-3.5 h-3.5"></i> Exportar PDF
+                </button>
+              </div>
+            </div>
           </div>
           <div id="contenedorTabGenerico" class="overflow-x-auto"></div>
         </div>
